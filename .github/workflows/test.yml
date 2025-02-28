@@ -24,7 +24,8 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install dependencies
-        uses: forge soldeer install
+        run: |
+          forge soldeer install
 
       - name: Show Forge version
         run: |
