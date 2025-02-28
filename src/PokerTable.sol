@@ -18,7 +18,8 @@ contract PokerTable is IPokerTable {
 
     /* ----------------------------- State Variables ---------------------------- */
 
-    address[] public players;
+    mapping(address => bool) public players;
+    uint256 public playerCount;
 
     constructor(IERC20 _currency, uint256 _bigBlindPrice) {
         currency = _currency;
@@ -30,8 +31,16 @@ contract PokerTable is IPokerTable {
     }
 
     function joinTable() external {
-        require(players.length < MAX_PLAYERS, TableIsFull());
+        require(playerCount < MAX_PLAYERS, TableIsFull());
 
-        players.push(msg.sender);
+        players[msg.sender] = true;
+        ++playerCount;
+    }
+
+    function leaveTable() external {
+        require(players[msg.sender], NotAPlayer());
+
+        players[msg.sender] = false;
+        --playerCount;
     }
 }
