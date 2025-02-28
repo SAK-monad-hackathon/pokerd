@@ -44,12 +44,7 @@ contract PokerTableConstructorTest is Test {
     }
 
     function test_RevertWhen_bigBlindIsTooLow() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IPokerTable.BigBlindPriceIsTooLow.selector,
-                1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(IPokerTable.BigBlindPriceIsTooLow.selector, 1));
         new PokerTable(IERC20(address(0xbeef)), 1);
     }
 }
