@@ -4,15 +4,17 @@ out = "out"
 libs = ["lib", "dependencies"]
 auto_detect_solc = true
 
+remappings = [
+    "@openzeppelin-contracts-5=dependencies/@openzeppelin-contracts-5.2.0/",
+    "forge-std/=lib/forge-std/src/",
+]
+
 [dependencies]
 "@openzeppelin-contracts" = "5.2.0"
 
 [soldeer]
-remappings_generate = false
-recursive_deps = true
-
-remappings = [
-    "@openzeppelin-contracts-5=dependencies/@openzeppelin-contracts-5.2.0/"
-]
+remappings_generate = true
+remappings_location = "config"
+remappings_version = true
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
