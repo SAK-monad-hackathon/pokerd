@@ -17,7 +17,8 @@ contract CounterScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        pokerTable = new PokerTable(IERC20(WRAPPED_MONAD));
+        // default to 1 WMON as BB
+        pokerTable = new PokerTable(IERC20(WRAPPED_MONAD), 10 ** 18);
 
         vm.stopBroadcast();
     }
