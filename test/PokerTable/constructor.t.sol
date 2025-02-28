@@ -19,6 +19,10 @@ contract PokerTableConstructorTest is Test {
         // big blind price
         uint256 bigBlindPrice = pokerTable.bigBlindPrice();
         assertEq(bigBlindPrice, 2);
+
+        // small blind price
+        uint256 smallBlindPrice = pokerTable.smallBlindPrice();
+        assertEq(smallBlindPrice, 1);
     }
 
     function test_RevertWhen_bigBlindIsTooLow() public {
