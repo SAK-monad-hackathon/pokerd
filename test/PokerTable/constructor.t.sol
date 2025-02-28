@@ -9,16 +9,34 @@ import {IPokerTable} from "../../src/interfaces/IPokerTable.sol";
 import {PokerTable} from "../../src/PokerTable.sol";
 
 contract PokerTableConstructorTest is Test {
-    function test_currencyIsSet() public {
-        PokerTable pokerTable = new PokerTable(IERC20(address(0xbeef)), 2);
+    PokerTable pokerTable;
 
+    function setUp() public {
+        pokerTable = new PokerTable(IERC20(address(0xbeef)), 2);
+    }
+
+    function test_currencyIsSet() public view {
         // currency
         IERC20 currency = pokerTable.currency();
         assertEq(address(currency), address(0xbeef));
+    }
 
+    function test_blindPrices() public view {
         // big blind price
         uint256 bigBlindPrice = pokerTable.bigBlindPrice();
         assertEq(bigBlindPrice, 2);
+
+        // small blind price
+        uint256 smallBlindPrice = pokerTable.smallBlindPrice();
+        assertEq(smallBlindPrice, 1);
+    }
+
+    function test_smallBlindRoundsDown() public {
+        pokerTable = new PokerTable(IERC20(address(0xbeef)), 3);
+
+        // big blind price
+        uint256 bigBlindPrice = pokerTable.bigBlindPrice();
+        assertEq(bigBlindPrice, 3);
 
         // small blind price
         uint256 smallBlindPrice = pokerTable.smallBlindPrice();
