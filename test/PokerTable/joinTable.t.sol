@@ -27,6 +27,9 @@ contract PokerTableJoinTableTest is Test {
             pokerTable.joinTable();
         }
 
+        // sanity check
+        assertEq(pokerTable.playerCount(), pokerTable.MAX_PLAYERS());
+
         vm.expectRevert(IPokerTable.TableIsFull.selector);
         pokerTable.joinTable();
     }

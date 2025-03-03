@@ -44,4 +44,14 @@ contract PokerTable is IPokerTable {
         players[msg.sender] = false;
         --playerCount;
     }
+
+    // TODO should only be callable by dealer
+    function setCurrentPhase(GamePhases _newPhase) external {
+        GamePhases _currentPhase = currentPhase;
+        if (_newPhase != GamePhases.PreFlop && _newPhase != GamePhases.WaitingForPlayers) {
+            require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
+        }
+
+        currentPhase = _newPhase;
+    }
 }

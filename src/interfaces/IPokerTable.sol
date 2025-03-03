@@ -5,8 +5,10 @@ interface IPokerTable {
     error BigBlindPriceIsTooLow(uint256 price);
     error TableIsFull();
     error NotAPlayer();
+    error SkippingPhasesIsNotAllowed();
 
     enum GamePhases {
+        WaitingForPlayers,
         PreFlop,
         Flop,
         Turn,
