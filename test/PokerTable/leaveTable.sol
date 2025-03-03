@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.28;
 
-import {Test} from "forge-std/Test.sol";
-
 import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
 
 import {IPokerTable} from "../../src/interfaces/IPokerTable.sol";
 import {PokerTable} from "../../src/PokerTable.sol";
 
-contract PokerTableLeaveTableTest is Test {
-    PokerTable pokerTable;
+import {BaseFixtures} from "../utils/BaseFixtures.sol";
 
-    function setUp() public {
-        pokerTable = new PokerTable(IERC20(address(0xbeef)), 1 ether);
+contract PokerTableLeaveTableTest is BaseFixtures {
+    function setUp() public override {
+        super.setUp();
+
         pokerTable.joinTable(pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice());
 
         // sanity check

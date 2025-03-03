@@ -8,31 +8,26 @@ import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
 import {IPokerTable} from "../../src/interfaces/IPokerTable.sol";
 import {PokerTable} from "../../src/PokerTable.sol";
 
-contract PokerTableConstructorTest is Test {
-    PokerTable pokerTable;
+import {BaseFixtures} from "../utils/BaseFixtures.sol";
 
-    function setUp() public {
-        pokerTable = new PokerTable(IERC20(address(0xbeef)), 2);
-    }
-
+contract PokerTableConstructorTest is BaseFixtures {
     function test_currencyIsSet() public view {
-        // currency
         IERC20 currency = pokerTable.currency();
-        assertEq(address(currency), address(0xbeef));
+        assertFalse(address(currency) == address(0));
     }
 
     function test_blindPrices() public view {
         // big blind price
         uint256 bigBlindPrice = pokerTable.bigBlindPrice();
-        assertEq(bigBlindPrice, 2);
+        assertEq(bigBlindPrice, 1 ether);
 
         // small blind price
         uint256 smallBlindPrice = pokerTable.smallBlindPrice();
-        assertEq(smallBlindPrice, 1);
+        assertEq(smallBlindPrice, 0.5 ether);
     }
 
     function test_smallBlindRoundsDown() public {
-        pokerTable = new PokerTable(IERC20(address(0xbeef)), 3);
+        pokerTable = new PokerTable(currency, 3);
 
         // big blind price
         uint256 bigBlindPrice = pokerTable.bigBlindPrice();
@@ -45,6 +40,6 @@ contract PokerTableConstructorTest is Test {
 
     function test_RevertWhen_bigBlindIsTooLow() public {
         vm.expectRevert(abi.encodeWithSelector(IPokerTable.BigBlindPriceIsTooLow.selector, 1));
-        new PokerTable(IERC20(address(0xbeef)), 1);
+        new PokerTable(currency, 1);
     }
 }
