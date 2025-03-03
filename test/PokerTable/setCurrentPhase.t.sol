@@ -95,4 +95,12 @@ contract PokerTableLeaveTableTest is Test {
         vm.expectRevert(IPokerTable.SkippingPhasesIsNotAllowed.selector);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
     }
+
+    function test_RevertWhen_notEnoughPlayersToGoToPreFlop() public {
+        vm.prank(player2);
+        pokerTable.leaveTable();
+
+        vm.expectRevert(IPokerTable.NotEnoughPlayers.selector);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+    }
 }

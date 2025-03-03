@@ -59,7 +59,7 @@ contract PokerTable is IPokerTable {
         GamePhases _currentPhase = currentPhase;
         if (_newPhase != GamePhases.PreFlop && _newPhase != GamePhases.WaitingForPlayers) {
             require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
-        } else if (_currentPhase == GamePhases.WaitingForPlayers) {
+        } else if (_newPhase == GamePhases.PreFlop) {
             require(playerCount > 1, NotEnoughPlayers());
         }
 
