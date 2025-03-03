@@ -10,6 +10,12 @@ contract PokerTable is IPokerTable {
 
     uint8 public constant MAX_PLAYERS = 5;
 
+    /// @notice Minimum buy-in (in Big Blings)
+    uint8 public constant MIN_BUY_IN_BB = 40;
+
+    /// @notice Maximum buy-in (in Big Blings)
+    uint8 public constant MAX_BUY_IN_BB = 100;
+
     /* ------------------------------- Immutables ------------------------------- */
 
     IERC20 public immutable currency;
@@ -31,8 +37,11 @@ contract PokerTable is IPokerTable {
         smallBlindPrice = _bigBlindPrice / 2;
     }
 
-    function joinTable() external {
+    function joinTable(uint256 _buyIn) external {
+        uint256 _bigBlindPrice = bigBlindPrice;
         require(playerCount < MAX_PLAYERS, TableIsFull());
+        require(_buyIn >= MIN_BUY_IN_BB * _bigBlindPrice, InvalidBuyIn());
+        require(_buyIn <= MAX_BUY_IN_BB * _bigBlindPrice, InvalidBuyIn());
 
         players[msg.sender] = true;
         ++playerCount;

@@ -10,13 +10,17 @@ import {PokerTable} from "../../src/PokerTable.sol";
 
 contract PokerTableJoinTableTest is Test {
     PokerTable pokerTable;
+    uint256 minBuyIn;
+    uint256 maxBuyIn;
 
     function setUp() public {
         pokerTable = new PokerTable(IERC20(address(0xbeef)), 1 ether);
+        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
+        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.bigBlindPrice();
     }
 
     function test_playerCanJoin() public {
-        pokerTable.joinTable();
+        pokerTable.joinTable(minBuyIn);
 
         assertTrue(pokerTable.players(address(this)));
     }
@@ -24,13 +28,23 @@ contract PokerTableJoinTableTest is Test {
     function test_RevertWhen_tableIsFull() public {
         for (uint160 i = 0; i < pokerTable.MAX_PLAYERS(); i++) {
             vm.prank(address(bytes20(i)));
-            pokerTable.joinTable();
+            pokerTable.joinTable(minBuyIn);
         }
 
         // sanity check
         assertEq(pokerTable.playerCount(), pokerTable.MAX_PLAYERS());
 
         vm.expectRevert(IPokerTable.TableIsFull.selector);
-        pokerTable.joinTable();
+        pokerTable.joinTable(minBuyIn);
+    }
+
+    function test_RevertWhen_buyInTooLow() public {
+        vm.expectRevert(IPokerTable.InvalidBuyIn.selector);
+        pokerTable.joinTable(minBuyIn - 1);
+    }
+
+    function test_RevertWhen_buyInTooHigh() public {
+        vm.expectRevert(IPokerTable.InvalidBuyIn.selector);
+        pokerTable.joinTable(maxBuyIn + 1);
     }
 }

@@ -13,7 +13,7 @@ contract PokerTableLeaveTableTest is Test {
 
     function setUp() public {
         pokerTable = new PokerTable(IERC20(address(0xbeef)), 1 ether);
-        pokerTable.joinTable();
+        pokerTable.joinTable(pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice());
 
         // sanity check
         assertTrue(pokerTable.players(address(this)));
