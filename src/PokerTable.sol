@@ -20,6 +20,7 @@ contract PokerTable is IPokerTable {
 
     mapping(address => bool) public players;
     uint256 public playerCount;
+    GamePhases public currentPhase;
 
     constructor(IERC20 _currency, uint256 _bigBlindPrice) {
         currency = _currency;
