@@ -30,64 +30,53 @@ contract PokerTableLeaveTableTest is BaseFixtures {
     }
 
     function test_setCurrentPhase() public {
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
 
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.PreFlop));
+        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForDealer));
     }
 
-    function test_setCurrentPhaseToPreFlopIsAllowedFromAnyState() public {
+    function test_setCurrentPhaseToWaitingForDealerIsAllowedFromAnyState() public {
         // from `WaitingForPlayers`
         assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
 
         // from `PreFlop`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.PreFlop));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        goToPhase(IPokerTable.GamePhases.PreFlop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
 
         // from `Flop`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.PreFlop));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        goToPhase(IPokerTable.GamePhases.Flop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
 
         // from `Turn`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.PreFlop));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Turn);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        goToPhase(IPokerTable.GamePhases.Turn);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
 
         // from `River`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.PreFlop));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Turn);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.River);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        goToPhase(IPokerTable.GamePhases.River);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
     }
 
     function test_setCurrentPhaseToWaitingForPlayersIsAllowedFromAnyState() public {
-        // from `PreFlop`
+        // from `WaitingForDealer`
         assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        goToPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+
+        // from `PreFlop`
+        goToPhase(IPokerTable.GamePhases.PreFlop);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
 
         // from `Flop`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
+        goToPhase(IPokerTable.GamePhases.Flop);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
 
         // from `Turn`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Turn);
+        goToPhase(IPokerTable.GamePhases.Turn);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
 
         // from `River`
-        assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Turn);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.River);
+        goToPhase(IPokerTable.GamePhases.River);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
     }
 
@@ -101,6 +90,6 @@ contract PokerTableLeaveTableTest is BaseFixtures {
         pokerTable.leaveTable();
 
         vm.expectRevert(IPokerTable.NotEnoughPlayers.selector);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
     }
 }

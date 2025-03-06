@@ -18,4 +18,21 @@ contract BaseFixtures is Test {
         currency = new MockERC20();
         pokerTable = new PokerTable(currency, 1 ether);
     }
+
+    function goToPhase(IPokerTable.GamePhases _toPhase) internal {
+        uint256 _fromPhase = uint256(pokerTable.currentPhase());
+        if (uint256(_toPhase) == _fromPhase) {
+            return;
+        }
+
+        if (_toPhase == IPokerTable.GamePhases.WaitingForPlayers || _toPhase == IPokerTable.GamePhases.WaitingForDealer)
+        {
+            pokerTable.setCurrentPhase(_toPhase);
+            return;
+        }
+
+        for (uint256 i = _fromPhase + 1; i < uint256(_toPhase); i++) {
+            pokerTable.setCurrentPhase(IPokerTable.GamePhases(i));
+        }
+    }
 }

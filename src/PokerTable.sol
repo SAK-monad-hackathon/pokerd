@@ -57,9 +57,9 @@ contract PokerTable is IPokerTable {
     // TODO should only be callable by dealer
     function setCurrentPhase(GamePhases _newPhase) external {
         GamePhases _currentPhase = currentPhase;
-        if (_newPhase != GamePhases.PreFlop && _newPhase != GamePhases.WaitingForPlayers) {
+        if (_newPhase != GamePhases.WaitingForDealer && _newPhase != GamePhases.WaitingForPlayers) {
             require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
-        } else if (_newPhase == GamePhases.PreFlop) {
+        } else if (_newPhase == GamePhases.WaitingForDealer) {
             require(playerCount > 1, NotEnoughPlayers());
         }
 

@@ -11,9 +11,14 @@ interface IPokerTable {
 
     enum GamePhases {
         WaitingForPlayers,
+        WaitingForDealer,
         PreFlop,
+        WaitingForFlop,
         Flop,
+        WaitingForTurn,
         Turn,
-        River
+        WaitingForRiver,
+        River,
+        WaitingForResult
     }
 }
