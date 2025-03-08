@@ -7,8 +7,9 @@ import {IPokerTable} from "../../src/interfaces/IPokerTable.sol";
 import {PokerTable} from "../../src/PokerTable.sol";
 
 import {BaseFixtures} from "../utils/BaseFixtures.sol";
+import {MockERC20} from "../utils/MockERC20.sol";
 
-contract PokerTableLeaveTableTest is BaseFixtures {
+contract PokerTableSetCurrentPhaseTest is BaseFixtures {
     address player1 = address(1);
     address player2 = address(2);
 
@@ -16,10 +17,17 @@ contract PokerTableLeaveTableTest is BaseFixtures {
         super.setUp();
 
         uint256 minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        vm.prank(player1);
+        vm.startPrank(player1);
+        currency.approve(address(pokerTable), minBuyIn);
+        MockERC20(address(currency)).mint(player1, minBuyIn);
         pokerTable.joinTable(minBuyIn);
-        vm.prank(player2);
+        vm.stopPrank();
+
+        vm.startPrank(player2);
+        currency.approve(address(pokerTable), minBuyIn);
+        MockERC20(address(currency)).mint(player2, minBuyIn);
         pokerTable.joinTable(minBuyIn);
+        vm.stopPrank();
 
         // sanity check
         assertEq(pokerTable.playerCount(), 2);

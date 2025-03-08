@@ -17,6 +17,9 @@ contract BaseFixtures is Test {
     function setUp() public virtual {
         currency = new MockERC20();
         pokerTable = new PokerTable(currency, 1 ether);
+
+        currency.approve(address(pokerTable), type(uint256).max);
+        MockERC20(address(currency)).mint(address(this), 100 ether);
     }
 
     function goToPhase(IPokerTable.GamePhases _toPhase) internal {

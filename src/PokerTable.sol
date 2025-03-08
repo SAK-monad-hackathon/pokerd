@@ -2,10 +2,13 @@
 pragma solidity 0.8.28;
 
 import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin-contracts-5/token/ERC20/utils/SafeERC20.sol";
 
 import {IPokerTable} from "./interfaces/IPokerTable.sol";
 
 contract PokerTable is IPokerTable {
+    using SafeERC20 for IERC20;
+
     /* -------------------------------- Constants ------------------------------- */
 
     uint8 public constant MAX_PLAYERS = 5;
@@ -25,6 +28,7 @@ contract PokerTable is IPokerTable {
     /* ----------------------------- State Variables ---------------------------- */
 
     mapping(address => bool) public players;
+    mapping(address => uint256) public playersBalance;
     uint256 public playerCount;
     GamePhases public currentPhase;
 
@@ -45,6 +49,9 @@ contract PokerTable is IPokerTable {
 
         players[msg.sender] = true;
         ++playerCount;
+        playersBalance[msg.sender] = _buyIn;
+
+        currency.safeTransferFrom(msg.sender, address(this), _buyIn);
     }
 
     function leaveTable() external {
@@ -52,6 +59,12 @@ contract PokerTable is IPokerTable {
 
         players[msg.sender] = false;
         --playerCount;
+        uint256 playerBalance = playersBalance[msg.sender];
+        playersBalance[msg.sender] = 0;
+
+        if (playerBalance > 0) {
+            currency.transfer(msg.sender, playerBalance);
+        }
     }
 
     // TODO should only be callable by dealer
