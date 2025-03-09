@@ -3,10 +3,11 @@ pragma solidity 0.8.28;
 
 import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin-contracts-5/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin-contracts-5/access/Ownable.sol";
 
 import {IPokerTable} from "./interfaces/IPokerTable.sol";
 
-contract PokerTable is IPokerTable {
+contract PokerTable is IPokerTable, Ownable {
     using SafeERC20 for IERC20;
 
     /* -------------------------------- Constants ------------------------------- */
@@ -31,18 +32,20 @@ contract PokerTable is IPokerTable {
     mapping(uint256 => address) public playerIndices;
     mapping(address => uint256) public reversePlayerIndices;
     mapping(address => uint256) public playersBalance;
-    mapping(uint256 => bool) public isPlayerIndexInHand;
+    mapping(uint256 => bool) public isPlayerIndexInRound;
     uint256 public playerCount;
-    uint256 public playersLeftInHandCount;
+    uint256 public playersLeftInRoundCount;
     uint256 public playerIndexWithBigBlind;
     GamePhases public currentPhase;
-    mapping(address => uint256) public playerBets;
+    uint256 public currentRoundId;
+    mapping(uint256 => RoundData) public roundData;
+    mapping(address => uint256) public playerAmountInPot;
     uint256 public currentBettorIndex;
     uint256 public currentPot;
     uint256 public highestBettorIndex;
     uint256 public amountToCall;
 
-    constructor(IERC20 _currency, uint256 _bigBlindPrice) {
+    constructor(IERC20 _currency, uint256 _bigBlindPrice) Ownable(msg.sender) {
         currency = _currency;
 
         require(_bigBlindPrice > 1, BigBlindPriceIsTooLow(_bigBlindPrice));
@@ -84,13 +87,15 @@ contract PokerTable is IPokerTable {
     }
 
     // TODO should only be callable by dealer
-    function setCurrentPhase(GamePhases _newPhase) external {
+    function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external {
         GamePhases _currentPhase = currentPhase;
         if (_newPhase != GamePhases.WaitingForDealer && _newPhase != GamePhases.WaitingForPlayers) {
             require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
         } else if (_currentPhase == GamePhases.WaitingForPlayers && _newPhase == GamePhases.WaitingForDealer) {
             require(playerCount > 1, NotEnoughPlayers());
         }
+
+        roundData[currentRoundId].cardsRevealed = string.concat(roundData[currentRoundId].cardsRevealed, _cardsToReveal);
 
         _setCurrentPhase(_newPhase);
     }
@@ -100,7 +105,7 @@ contract PokerTable is IPokerTable {
         require(_currentBettorIndex == reversePlayerIndices[msg.sender], NotTurnOfPlayer());
         require(_amount <= playersBalance[msg.sender], NotEnoughBalance());
 
-        uint256 _playerBets = playerBets[msg.sender];
+        uint256 _playerBets = playerAmountInPot[msg.sender];
         uint256 _minBet = amountToCall - _playerBets;
         require(_amount >= _minBet, BetTooSmall());
 
@@ -110,7 +115,7 @@ contract PokerTable is IPokerTable {
             highestBettorIndex = _currentBettorIndex;
         }
 
-        playerBets[msg.sender] = _playerBets + _amount;
+        playerAmountInPot[msg.sender] = _playerBets + _amount;
         currentPot += _amount;
         uint256 _nextBettorIndex = _findNextBettor(_currentBettorIndex);
         currentBettorIndex = _nextBettorIndex;
@@ -125,17 +130,38 @@ contract PokerTable is IPokerTable {
     function fold() external {
         uint256 playerIndex = reversePlayerIndices[msg.sender];
         require(currentBettorIndex == playerIndex, NotTurnOfPlayer());
-        require(isPlayerIndexInHand[playerIndex], PlayerNotInHand());
+        require(isPlayerIndexInRound[playerIndex], PlayerNotInHand());
 
-        uint256 _playersLeftInHandCount = playersLeftInHandCount;
-        isPlayerIndexInHand[playerIndex] = false;
-        playersLeftInHandCount = --_playersLeftInHandCount;
+        uint256 _playersLeftInRoundCount = playersLeftInRoundCount;
+        isPlayerIndexInRound[playerIndex] = false;
+        playersLeftInRoundCount = --_playersLeftInRoundCount;
 
         // TODO if last player fold, highest bettor won
-        if (_playersLeftInHandCount == 1) {
+        if (_playersLeftInRoundCount == 1) {
             playersBalance[playerIndices[highestBettorIndex]] += currentPot;
             _setCurrentPhase(GamePhases.WaitingForDealer);
         }
+    }
+
+    function revealShowdownResult(RoundResult[] memory gains) external {
+        require(currentPhase == GamePhases.WaitingForResult, InvalidState(currentPhase, GamePhases.WaitingForResult));
+        require(gains.length == MAX_PLAYERS, InvalidGains());
+        int256 gainsAccumulator;
+        for (uint256 i = 0; i < MAX_PLAYERS; i++) {
+            address _player = playerIndices[i];
+            int256 _playerGains = gains[i].gains;
+            require(_playerGains >= 0, InvalidGains());
+            gainsAccumulator += _playerGains;
+
+            if (_playerGains > 0) {
+                playersBalance[_player] += uint256(_playerGains);
+            }
+            roundData[currentRoundId].results[i].gains = _playerGains - int256(playerAmountInPot[_player]);
+        }
+
+        require(uint256(gainsAccumulator) == currentPot, InvalidGains());
+
+        _setCurrentPhase(GamePhases.WaitingForDealer);
     }
 
     /* ---------------------------- Private Functions --------------------------- */
@@ -147,6 +173,8 @@ contract PokerTable is IPokerTable {
                 return;
             }
 
+            ++currentRoundId;
+
             // assign blinds and make players pay them
             // TODO handle cases where players don't have enough tokens to pay the blinds
             (uint256 _SBIndex, uint256 _BBIndex) = _assignNextBlinds();
@@ -155,7 +183,7 @@ contract PokerTable is IPokerTable {
 
             address _sb = playerIndices[_SBIndex];
             if (_sb != address(0)) {
-                playerBets[_sb] = bigBlindPrice;
+                playerAmountInPot[_sb] = bigBlindPrice;
                 playersBalance[_sb] -= bigBlindPrice / 2;
             }
 
@@ -174,7 +202,7 @@ contract PokerTable is IPokerTable {
         SBIndex_ = _currentBB;
         BBIndex_ = _currentBB + 1;
 
-        while (playerIndices[BBIndex_] == address(0)) {
+        while (playerIndices[BBIndex_] == address(0) || playersBalance[playerIndices[BBIndex_]] == 0) {
             if (BBIndex_ >= MAX_PLAYERS) {
                 BBIndex_ = 0;
             } else {
@@ -188,7 +216,10 @@ contract PokerTable is IPokerTable {
 
     function _findNextBettor(uint256 _currentBettorIndex) private view returns (uint256 nextPlayerIndex_) {
         nextPlayerIndex_ = _currentBettorIndex + 1;
-        while (!isPlayerIndexInHand[nextPlayerIndex_]) {
+        while (
+            !isPlayerIndexInRound[nextPlayerIndex_] && playersBalance[playerIndices[nextPlayerIndex_]] == 0
+                && nextPlayerIndex_ != _currentBettorIndex
+        ) {
             if (nextPlayerIndex_ >= MAX_PLAYERS) {
                 nextPlayerIndex_ = 0;
             } else {
@@ -204,11 +235,11 @@ contract PokerTable is IPokerTable {
                 continue;
             }
 
-            playerBets[player] = 0;
-            isPlayerIndexInHand[i] = true;
+            playerAmountInPot[player] = 0;
+            isPlayerIndexInRound[i] = true;
         }
 
-        playersLeftInHandCount = playerCount;
+        playersLeftInRoundCount = playerCount;
         amountToCall = 0;
         currentPot = 0;
     }

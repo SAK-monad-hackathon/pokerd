@@ -38,59 +38,73 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
     }
 
     function test_setCurrentPhase() public {
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "test string");
 
         assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForDealer));
+        string memory _roundData = pokerTable.roundData(0);
+        assertEq(_roundData, "test string");
+    }
+
+    function test_setCurrentPhaseConcantenateCardsRevealed() public {
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop, "A");
+
+        string memory _roundData = pokerTable.roundData(1);
+        assertEq(_roundData, "A");
+
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForFlop, "BCD");
+        _roundData = pokerTable.roundData(1);
+        assertEq(_roundData, "ABCD");
     }
 
     function test_setCurrentPhaseToWaitingForDealerIsAllowedFromAnyState() public {
         // from `WaitingForPlayers`
         assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
         // from `PreFlop`
         goToPhase(IPokerTable.GamePhases.PreFlop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
         // from `Flop`
         goToPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
         // from `Turn`
         goToPhase(IPokerTable.GamePhases.Turn);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
         // from `River`
         goToPhase(IPokerTable.GamePhases.River);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
     }
 
     function test_setCurrentPhaseToWaitingForPlayersIsAllowedFromAnyState() public {
         // from `WaitingForDealer`
         assertEq(uint256(pokerTable.currentPhase()), uint256(IPokerTable.GamePhases.WaitingForPlayers));
         goToPhase(IPokerTable.GamePhases.WaitingForDealer);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
 
         // from `PreFlop`
         goToPhase(IPokerTable.GamePhases.PreFlop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
 
         // from `Flop`
         goToPhase(IPokerTable.GamePhases.Flop);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
 
         // from `Turn`
         goToPhase(IPokerTable.GamePhases.Turn);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
 
         // from `River`
         goToPhase(IPokerTable.GamePhases.River);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
     }
 
     function test_RevertWhen_setCurrentPhaseSkippingPhase() public {
         vm.expectRevert(IPokerTable.SkippingPhasesIsNotAllowed.selector);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop, "");
     }
 
     function test_RevertWhen_notEnoughPlayersToGoToPreFlop() public {
@@ -98,6 +112,6 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
         pokerTable.leaveTable();
 
         vm.expectRevert(IPokerTable.NotEnoughPlayers.selector);
-        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer);
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
     }
 }

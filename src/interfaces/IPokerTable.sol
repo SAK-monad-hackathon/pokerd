@@ -6,6 +6,7 @@ interface IPokerTable {
     error TableIsFull();
     error NotAPlayer();
     error SkippingPhasesIsNotAllowed();
+    error InvalidState(GamePhases current, GamePhases required);
     error NotEnoughPlayers();
     error InvalidBuyIn();
     error OccupiedSeat();
@@ -14,6 +15,7 @@ interface IPokerTable {
     error BetTooSmall();
     error InvalidBetAmount();
     error NotEnoughBalance();
+    error InvalidGains();
 
     enum GamePhases {
         WaitingForPlayers,
@@ -26,5 +28,15 @@ interface IPokerTable {
         WaitingForRiver,
         River,
         WaitingForResult
+    }
+
+    struct RoundResult {
+        int256 gains;
+        string cards;
+    }
+
+    struct RoundData {
+        string cardsRevealed;
+        RoundResult[] results;
     }
 }

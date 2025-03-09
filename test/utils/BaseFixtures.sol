@@ -30,12 +30,12 @@ contract BaseFixtures is Test {
 
         if (_toPhase == IPokerTable.GamePhases.WaitingForPlayers || _toPhase == IPokerTable.GamePhases.WaitingForDealer)
         {
-            pokerTable.setCurrentPhase(_toPhase);
+            pokerTable.setCurrentPhase(_toPhase, "");
             return;
         }
 
         for (uint256 i = _fromPhase + 1; i < uint256(_toPhase); i++) {
-            pokerTable.setCurrentPhase(IPokerTable.GamePhases(i));
+            pokerTable.setCurrentPhase(IPokerTable.GamePhases(i), "");
         }
     }
 }
