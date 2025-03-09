@@ -8,6 +8,7 @@ interface IPokerTable {
     error SkippingPhasesIsNotAllowed();
     error NotEnoughPlayers();
     error InvalidBuyIn();
+    error OccupiedSeat();
 
     enum GamePhases {
         WaitingForPlayers,

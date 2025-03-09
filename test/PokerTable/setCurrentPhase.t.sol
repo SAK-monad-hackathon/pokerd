@@ -20,13 +20,13 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
         vm.startPrank(player1);
         currency.approve(address(pokerTable), minBuyIn);
         MockERC20(address(currency)).mint(player1, minBuyIn);
-        pokerTable.joinTable(minBuyIn);
+        pokerTable.joinTable(minBuyIn, 0);
         vm.stopPrank();
 
         vm.startPrank(player2);
         currency.approve(address(pokerTable), minBuyIn);
         MockERC20(address(currency)).mint(player2, minBuyIn);
-        pokerTable.joinTable(minBuyIn);
+        pokerTable.joinTable(minBuyIn, 1);
         vm.stopPrank();
 
         // sanity check

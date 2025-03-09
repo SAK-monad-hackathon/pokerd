@@ -15,7 +15,7 @@ contract PokerTableLeaveTableTest is BaseFixtures {
         super.setUp();
 
         minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        pokerTable.joinTable(minBuyIn);
+        pokerTable.joinTable(minBuyIn, 0);
 
         // sanity check
         assertTrue(pokerTable.players(address(this)));
