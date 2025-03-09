@@ -162,6 +162,15 @@ contract PokerTable is IPokerTable, Ownable {
         _fold(currentBettorIndex);
     }
 
+    function cancelCurrentRound() external onlyOwner {
+        for (uint256 i = 0; i < MAX_PLAYERS; i++) {
+            address player = playerIndices[i];
+            playersBalance[player] += playerAmountInPot[player];
+        }
+
+        _setCurrentPhase(GamePhases.WaitingForDealer);
+    }
+
     /* ---------------------------- Private Functions --------------------------- */
     function _setCurrentPhase(GamePhases _newPhase) private {
         if (_newPhase == GamePhases.WaitingForDealer) {
