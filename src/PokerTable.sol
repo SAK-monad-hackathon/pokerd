@@ -205,14 +205,14 @@ contract PokerTable is IPokerTable, Ownable {
             // TODO handle cases where players don't have enough tokens to pay the blinds
             (uint256 _SBIndex, uint256 _BBIndex) = _assignNextBlinds();
             address _bb = playerIndices[_BBIndex];
-            currentPot += BIG_BLIND_PRICE + (BIG_BLIND_PRICE / 2);
+            currentPot += BIG_BLIND_PRICE + (SMALL_BLIND_PRICE);
             playerAmountInPot[_bb] = BIG_BLIND_PRICE;
             playersBalance[_bb] -= BIG_BLIND_PRICE;
 
             address _sb = playerIndices[_SBIndex];
             if (_sb != address(0)) {
-                playerAmountInPot[_sb] = BIG_BLIND_PRICE / 2;
-                playersBalance[_sb] -= BIG_BLIND_PRICE / 2;
+                playerAmountInPot[_sb] = SMALL_BLIND_PRICE;
+                playersBalance[_sb] -= SMALL_BLIND_PRICE;
             }
 
             highestBettorIndex = _BBIndex;
