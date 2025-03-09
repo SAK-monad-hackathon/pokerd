@@ -117,6 +117,7 @@ contract PokerTable is IPokerTable, Ownable {
             highestBettorIndex = _currentBettorIndex;
         }
 
+        playersBalance[msg.sender] -= _amount;
         playerAmountInPot[msg.sender] = _playerBets + _amount;
         currentPot += _amount;
         uint256 _nextBettorIndex = _findNextBettor(_currentBettorIndex);
@@ -241,7 +242,7 @@ contract PokerTable is IPokerTable, Ownable {
     function _findNextBettor(uint256 _currentBettorIndex) private view returns (uint256 nextPlayerIndex_) {
         nextPlayerIndex_ = _currentBettorIndex + 1;
         while (
-            !isPlayerIndexInRound[nextPlayerIndex_] && playersBalance[playerIndices[nextPlayerIndex_]] == 0
+            (!isPlayerIndexInRound[nextPlayerIndex_] || playersBalance[playerIndices[nextPlayerIndex_]] == 0)
                 && nextPlayerIndex_ != _currentBettorIndex
         ) {
             if (nextPlayerIndex_ >= MAX_PLAYERS) {
