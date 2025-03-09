@@ -12,34 +12,34 @@ import {BaseFixtures} from "../utils/BaseFixtures.sol";
 
 contract PokerTableConstructorTest is BaseFixtures {
     function test_currencyIsSet() public view {
-        IERC20 currency = pokerTable.currency();
-        assertFalse(address(currency) == address(0));
+        IERC20 CURRENCY = pokerTable.CURRENCY();
+        assertFalse(address(CURRENCY) == address(0));
     }
 
     function test_blindPrices() public view {
         // big blind price
-        uint256 bigBlindPrice = pokerTable.bigBlindPrice();
-        assertEq(bigBlindPrice, 1 ether);
+        uint256 BIG_BLIND_PRICE = pokerTable.BIG_BLIND_PRICE();
+        assertEq(BIG_BLIND_PRICE, 1 ether);
 
         // small blind price
-        uint256 smallBlindPrice = pokerTable.smallBlindPrice();
-        assertEq(smallBlindPrice, 0.5 ether);
+        uint256 SMALL_BLIND_PRICE = pokerTable.SMALL_BLIND_PRICE();
+        assertEq(SMALL_BLIND_PRICE, 0.5 ether);
     }
 
     function test_smallBlindRoundsDown() public {
-        pokerTable = new PokerTable(currency, 3);
+        pokerTable = new PokerTable(CURRENCY, 3);
 
         // big blind price
-        uint256 bigBlindPrice = pokerTable.bigBlindPrice();
-        assertEq(bigBlindPrice, 3);
+        uint256 BIG_BLIND_PRICE = pokerTable.BIG_BLIND_PRICE();
+        assertEq(BIG_BLIND_PRICE, 3);
 
         // small blind price
-        uint256 smallBlindPrice = pokerTable.smallBlindPrice();
-        assertEq(smallBlindPrice, 1);
+        uint256 SMALL_BLIND_PRICE = pokerTable.SMALL_BLIND_PRICE();
+        assertEq(SMALL_BLIND_PRICE, 1);
     }
 
     function test_RevertWhen_bigBlindIsTooLow() public {
         vm.expectRevert(abi.encodeWithSelector(IPokerTable.BigBlindPriceIsTooLow.selector, 1));
-        new PokerTable(currency, 1);
+        new PokerTable(CURRENCY, 1);
     }
 }

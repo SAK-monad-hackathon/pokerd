@@ -17,16 +17,16 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
     function setUp() public override {
         super.setUp();
 
-        uint256 minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
+        uint256 minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
         vm.startPrank(player1);
-        currency.approve(address(pokerTable), minBuyIn);
-        MockERC20(address(currency)).mint(player1, minBuyIn);
+        CURRENCY.approve(address(pokerTable), minBuyIn);
+        MockERC20(address(CURRENCY)).mint(player1, minBuyIn);
         pokerTable.joinTable(minBuyIn, 0);
         vm.stopPrank();
 
         vm.startPrank(player2);
-        currency.approve(address(pokerTable), minBuyIn);
-        MockERC20(address(currency)).mint(player2, minBuyIn);
+        CURRENCY.approve(address(pokerTable), minBuyIn);
+        MockERC20(address(CURRENCY)).mint(player2, minBuyIn);
         pokerTable.joinTable(minBuyIn, 1);
         vm.stopPrank();
 

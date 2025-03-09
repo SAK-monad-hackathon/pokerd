@@ -27,25 +27,25 @@ contract PokerTableGameplayPreFlopFoldsTest is BaseFixtures {
     function setUp() public override {
         super.setUp();
 
-        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.bigBlindPrice();
+        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
+        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
 
-        MockERC20(address(currency)).mint(p0, maxBuyIn);
-        MockERC20(address(currency)).mint(p1, maxBuyIn);
-        MockERC20(address(currency)).mint(p2, maxBuyIn);
-        MockERC20(address(currency)).mint(p3, maxBuyIn);
-        MockERC20(address(currency)).mint(p4, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p0, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p1, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p2, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p3, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p4, maxBuyIn);
 
         vm.prank(p0);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p1);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p2);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p3);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p4);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
 
         // sanity check
         assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForPlayers);
@@ -67,9 +67,9 @@ contract PokerTableGameplayPreFlopFoldsTest is BaseFixtures {
 
         assertEq(pokerTable.highestBettorIndex(), 1, "highestBettorIndex");
         assertEq(pokerTable.currentBettorIndex(), 2, "currentBettorIndex");
-        assertEq(pokerTable.currentPot(), pokerTable.bigBlindPrice() + (pokerTable.bigBlindPrice() / 2));
-        assertEq(pokerTable.playerAmountInPot(p0), pokerTable.bigBlindPrice() / 2, "playerAmountInPot p0");
-        assertEq(pokerTable.playerAmountInPot(p1), pokerTable.bigBlindPrice(), "playerAmountInPot p1");
+        assertEq(pokerTable.currentPot(), pokerTable.BIG_BLIND_PRICE() + (pokerTable.BIG_BLIND_PRICE() / 2));
+        assertEq(pokerTable.playerAmountInPot(p0), pokerTable.BIG_BLIND_PRICE() / 2, "playerAmountInPot p0");
+        assertEq(pokerTable.playerAmountInPot(p1), pokerTable.BIG_BLIND_PRICE(), "playerAmountInPot p1");
         assertEq(pokerTable.playerAmountInPot(p2), 0, "playerAmountInPot p2");
         assertEq(pokerTable.playerAmountInPot(p3), 0, "playerAmountInPot p3");
         assertEq(pokerTable.playerAmountInPot(p4), 0, "playerAmountInPot p4");

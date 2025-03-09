@@ -12,14 +12,14 @@ import {MockERC20} from "./MockERC20.sol";
 
 contract BaseFixtures is Test {
     PokerTable pokerTable;
-    IERC20 currency;
+    IERC20 CURRENCY;
 
     function setUp() public virtual {
-        currency = new MockERC20();
-        pokerTable = new PokerTable(currency, 1 ether);
+        CURRENCY = new MockERC20();
+        pokerTable = new PokerTable(CURRENCY, 1 ether);
 
-        currency.approve(address(pokerTable), type(uint256).max);
-        MockERC20(address(currency)).mint(address(this), 100 ether);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
+        MockERC20(address(CURRENCY)).mint(address(this), 100 ether);
     }
 
     function goToPhase(IPokerTable.GamePhases _toPhase) internal {

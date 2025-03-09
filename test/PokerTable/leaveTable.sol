@@ -14,7 +14,7 @@ contract PokerTableLeaveTableTest is BaseFixtures {
     function setUp() public override {
         super.setUp();
 
-        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
+        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
         pokerTable.joinTable(minBuyIn, 0);
 
         // sanity check
@@ -22,12 +22,12 @@ contract PokerTableLeaveTableTest is BaseFixtures {
     }
 
     function test_playerCanLeave() public {
-        uint256 playerBalanceBefore = currency.balanceOf(address(this));
+        uint256 playerBalanceBefore = CURRENCY.balanceOf(address(this));
 
         pokerTable.leaveTable();
 
-        assertEq(currency.balanceOf(address(pokerTable)), 0);
-        assertEq(currency.balanceOf(address(this)), playerBalanceBefore + minBuyIn);
+        assertEq(CURRENCY.balanceOf(address(pokerTable)), 0);
+        assertEq(CURRENCY.balanceOf(address(this)), playerBalanceBefore + minBuyIn);
         assertEq(pokerTable.playersBalance(address(this)), 0);
 
         assertFalse(pokerTable.players(address(this)));

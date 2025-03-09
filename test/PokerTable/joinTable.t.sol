@@ -17,15 +17,15 @@ contract PokerTableJoinTableTest is BaseFixtures {
     function setUp() public override {
         super.setUp();
 
-        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.bigBlindPrice();
+        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
+        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
     }
 
     function test_playerCanJoin() public {
-        uint256 playerBalanceBefore = currency.balanceOf(address(this));
+        uint256 playerBalanceBefore = CURRENCY.balanceOf(address(this));
         pokerTable.joinTable(minBuyIn, 0);
-        assertEq(currency.balanceOf(address(pokerTable)), minBuyIn);
-        assertEq(currency.balanceOf(address(this)), playerBalanceBefore - minBuyIn);
+        assertEq(CURRENCY.balanceOf(address(pokerTable)), minBuyIn);
+        assertEq(CURRENCY.balanceOf(address(this)), playerBalanceBefore - minBuyIn);
         assertEq(pokerTable.playersBalance(address(this)), minBuyIn);
 
         assertTrue(pokerTable.players(address(this)));
@@ -36,8 +36,8 @@ contract PokerTableJoinTableTest is BaseFixtures {
         uint256 maxPlayers = pokerTable.MAX_PLAYERS();
         for (uint160 i = 1; i <= maxPlayers; i++) {
             vm.startPrank(address(bytes20(i)));
-            currency.approve(address(pokerTable), minBuyIn);
-            MockERC20(address(currency)).mint(address(bytes20(i)), minBuyIn);
+            CURRENCY.approve(address(pokerTable), minBuyIn);
+            MockERC20(address(CURRENCY)).mint(address(bytes20(i)), minBuyIn);
             pokerTable.joinTable(minBuyIn, i);
             vm.stopPrank();
         }
@@ -61,8 +61,8 @@ contract PokerTableJoinTableTest is BaseFixtures {
 
     function test_RevertWhen_notEnoughTokens() public {
         vm.startPrank(address(4242));
-        currency.approve(address(pokerTable), type(uint256).max);
-        MockERC20(address(currency)).mint(address(4242), maxBuyIn - 1);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
+        MockERC20(address(CURRENCY)).mint(address(4242), maxBuyIn - 1);
 
         vm.expectRevert(
             abi.encodeWithSelector(

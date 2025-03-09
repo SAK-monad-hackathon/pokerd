@@ -25,9 +25,9 @@ contract PokerTable is IPokerTable, Ownable {
 
     /* ------------------------------- Immutables ------------------------------- */
 
-    IERC20 public immutable currency;
-    uint256 public immutable bigBlindPrice;
-    uint256 public immutable smallBlindPrice;
+    IERC20 public immutable CURRENCY;
+    uint256 public immutable BIG_BLIND_PRICE;
+    uint256 public immutable SMALL_BLIND_PRICE;
 
     /* ----------------------------- State Variables ---------------------------- */
 
@@ -49,16 +49,16 @@ contract PokerTable is IPokerTable, Ownable {
     uint256 public amountToCall;
 
     constructor(IERC20 _currency, uint256 _bigBlindPrice) Ownable(msg.sender) {
-        currency = _currency;
+        CURRENCY = _currency;
 
         require(_bigBlindPrice > 1, BigBlindPriceIsTooLow(_bigBlindPrice));
-        bigBlindPrice = _bigBlindPrice;
+        BIG_BLIND_PRICE = _bigBlindPrice;
         // rounding down is expected here
-        smallBlindPrice = _bigBlindPrice / 2;
+        SMALL_BLIND_PRICE = _bigBlindPrice / 2;
     }
 
     function joinTable(uint256 _buyIn, uint256 _indexOnTable) external {
-        uint256 _bigBlindPrice = bigBlindPrice;
+        uint256 _bigBlindPrice = BIG_BLIND_PRICE;
         require(playerCount < MAX_PLAYERS, TableIsFull());
         require(playerIndices[_indexOnTable] == address(0), OccupiedSeat());
         require(_buyIn >= MIN_BUY_IN_BB * _bigBlindPrice, InvalidBuyIn());
@@ -70,7 +70,7 @@ contract PokerTable is IPokerTable, Ownable {
         ++playerCount;
         playersBalance[msg.sender] = _buyIn;
 
-        currency.safeTransferFrom(msg.sender, address(this), _buyIn);
+        CURRENCY.safeTransferFrom(msg.sender, address(this), _buyIn);
 
         emit PlayerJoined(msg.sender, _buyIn, _indexOnTable);
     }
@@ -87,7 +87,7 @@ contract PokerTable is IPokerTable, Ownable {
         playersBalance[msg.sender] = 0;
 
         if (_playerBalance > 0) {
-            currency.transfer(msg.sender, _playerBalance);
+            CURRENCY.transfer(msg.sender, _playerBalance);
         }
 
         emit PlayerLeft(msg.sender, _playerBalance, _playerIndex);
@@ -198,19 +198,19 @@ contract PokerTable is IPokerTable, Ownable {
             // TODO handle cases where players don't have enough tokens to pay the blinds
             (uint256 _SBIndex, uint256 _BBIndex) = _assignNextBlinds();
             address _bb = playerIndices[_BBIndex];
-            currentPot += bigBlindPrice + (bigBlindPrice / 2);
-            playerAmountInPot[_bb] = bigBlindPrice;
-            playersBalance[_bb] -= bigBlindPrice;
+            currentPot += BIG_BLIND_PRICE + (BIG_BLIND_PRICE / 2);
+            playerAmountInPot[_bb] = BIG_BLIND_PRICE;
+            playersBalance[_bb] -= BIG_BLIND_PRICE;
 
             address _sb = playerIndices[_SBIndex];
             if (_sb != address(0)) {
-                playerAmountInPot[_sb] = bigBlindPrice / 2;
-                playersBalance[_sb] -= bigBlindPrice / 2;
+                playerAmountInPot[_sb] = BIG_BLIND_PRICE / 2;
+                playersBalance[_sb] -= BIG_BLIND_PRICE / 2;
             }
 
             highestBettorIndex = _BBIndex;
             currentBettorIndex = _findNextBettor(_BBIndex);
-            amountToCall = bigBlindPrice;
+            amountToCall = BIG_BLIND_PRICE;
         } else if (_newPhase == GamePhases.WaitingForPlayers) {
             _resetGameState();
         }

@@ -29,27 +29,27 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
     function setUp() public override {
         super.setUp();
 
-        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.bigBlindPrice();
-        bbAmount = pokerTable.bigBlindPrice();
+        minBuyIn = pokerTable.MIN_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
+        maxBuyIn = pokerTable.MAX_BUY_IN_BB() * pokerTable.BIG_BLIND_PRICE();
+        bbAmount = pokerTable.BIG_BLIND_PRICE();
         sbAmount = bbAmount / 2;
 
-        MockERC20(address(currency)).mint(p0, maxBuyIn);
-        MockERC20(address(currency)).mint(p1, maxBuyIn);
-        MockERC20(address(currency)).mint(p2, maxBuyIn);
-        MockERC20(address(currency)).mint(p3, maxBuyIn);
-        MockERC20(address(currency)).mint(p4, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p0, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p1, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p2, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p3, maxBuyIn);
+        MockERC20(address(CURRENCY)).mint(p4, maxBuyIn);
 
         vm.prank(p0);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p1);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p2);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p3);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
         vm.prank(p4);
-        currency.approve(address(pokerTable), type(uint256).max);
+        CURRENCY.approve(address(pokerTable), type(uint256).max);
 
         // sanity check
         assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForPlayers);
@@ -82,10 +82,10 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
 
         // p2 bets 3 BB
         vm.startPrank(p2);
-        pokerTable.bet(pokerTable.bigBlindPrice() * 3);
+        pokerTable.bet(pokerTable.BIG_BLIND_PRICE() * 3);
         vm.stopPrank();
         assertTrue(pokerTable.isPlayerIndexInRound(2));
-        assertEq(pokerTable.playerAmountInPot(p2), pokerTable.bigBlindPrice() * 3, "playerAmountInPot p2");
+        assertEq(pokerTable.playerAmountInPot(p2), pokerTable.BIG_BLIND_PRICE() * 3, "playerAmountInPot p2");
         assertEq(pokerTable.highestBettorIndex(), 2, "highestBettorIndex");
 
         // p3 folds
@@ -97,7 +97,7 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
 
         // p4 bets 9 BB
         vm.startPrank(p4);
-        pokerTable.bet(pokerTable.bigBlindPrice() * 9);
+        pokerTable.bet(pokerTable.BIG_BLIND_PRICE() * 9);
         vm.stopPrank();
         assertEq(pokerTable.highestBettorIndex(), 4, "highestBettorIndex");
 
@@ -128,9 +128,9 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
         // reset should happen here
         assertEq(pokerTable.playersBalance(p0), maxBuyIn - sbAmount);
         assertEq(pokerTable.playersBalance(p1), maxBuyIn - bbAmount - sbAmount, "p1"); // only lost BB but paid SB
-        assertEq(pokerTable.playersBalance(p2), maxBuyIn + pokerTable.bigBlindPrice() * 9 + sbAmount, "p2"); // won prev round but paid BB
+        assertEq(pokerTable.playersBalance(p2), maxBuyIn + pokerTable.BIG_BLIND_PRICE() * 9 + sbAmount, "p2"); // won prev round but paid BB
         assertEq(pokerTable.playersBalance(p3), maxBuyIn, "p3");
-        assertEq(pokerTable.playersBalance(p4), maxBuyIn - pokerTable.bigBlindPrice() * 9);
+        assertEq(pokerTable.playersBalance(p4), maxBuyIn - pokerTable.BIG_BLIND_PRICE() * 9);
         assertEq(pokerTable.playersLeftInRoundCount(), 5);
 
         // all players should be back in round
