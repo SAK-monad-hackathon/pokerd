@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin-contracts-5/access/Ownable.sol";
 
 import {IPokerTable} from "../../src/interfaces/IPokerTable.sol";
 import {PokerTable} from "../../src/PokerTable.sol";
@@ -105,6 +106,12 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
     function test_RevertWhen_setCurrentPhaseSkippingPhase() public {
         vm.expectRevert(IPokerTable.SkippingPhasesIsNotAllowed.selector);
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop, "");
+    }
+
+    function test_RevertWhen_callerIsNotOwner() public {
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(1)));
+        vm.prank(address(1));
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForPlayers, "");
     }
 
     function test_RevertWhen_notEnoughPlayersToGoToPreFlop() public {

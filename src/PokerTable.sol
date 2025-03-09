@@ -86,8 +86,7 @@ contract PokerTable is IPokerTable, Ownable {
         }
     }
 
-    // TODO should only be callable by dealer
-    function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external {
+    function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external onlyOwner {
         GamePhases _currentPhase = currentPhase;
         if (_newPhase != GamePhases.WaitingForDealer && _newPhase != GamePhases.WaitingForPlayers) {
             require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
@@ -143,7 +142,7 @@ contract PokerTable is IPokerTable, Ownable {
         }
     }
 
-    function revealShowdownResult(RoundResult[] memory gains) external {
+    function revealShowdownResult(RoundResult[] memory gains) external onlyOwner {
         require(currentPhase == GamePhases.WaitingForResult, InvalidState(currentPhase, GamePhases.WaitingForResult));
         require(gains.length == MAX_PLAYERS, InvalidGains());
         int256 gainsAccumulator;
