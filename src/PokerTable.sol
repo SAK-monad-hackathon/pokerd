@@ -71,22 +71,26 @@ contract PokerTable is IPokerTable, Ownable {
         playersBalance[msg.sender] = _buyIn;
 
         currency.safeTransferFrom(msg.sender, address(this), _buyIn);
+
+        emit PlayerJoined(msg.sender, _buyIn, _indexOnTable);
     }
 
     function leaveTable() external {
         require(players[msg.sender], NotAPlayer());
 
         players[msg.sender] = false;
-        uint256 playerIndex = reversePlayerIndices[msg.sender];
+        uint256 _playerIndex = reversePlayerIndices[msg.sender];
         reversePlayerIndices[msg.sender] = 0;
-        playerIndices[playerIndex] = address(0);
+        playerIndices[_playerIndex] = address(0);
         --playerCount;
-        uint256 playerBalance = playersBalance[msg.sender];
+        uint256 _playerBalance = playersBalance[msg.sender];
         playersBalance[msg.sender] = 0;
 
-        if (playerBalance > 0) {
-            currency.transfer(msg.sender, playerBalance);
+        if (_playerBalance > 0) {
+            currency.transfer(msg.sender, _playerBalance);
         }
+
+        emit PlayerLeft(msg.sender, _playerBalance, _playerIndex);
     }
 
     function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external onlyOwner {
@@ -128,6 +132,8 @@ contract PokerTable is IPokerTable, Ownable {
         if (_nextBettorIndex == highestBettorIndex) {
             _setCurrentPhase(GamePhases(uint256(currentPhase) + 1));
         }
+
+        emit PlayerBet(msg.sender, _currentBettorIndex, _amount);
     }
 
     function fold() external {
@@ -156,6 +162,8 @@ contract PokerTable is IPokerTable, Ownable {
 
         require(uint256(gainsAccumulator) == currentPot, InvalidGains());
 
+        emit ShowdownEnded(gains, currentPot, roundData[currentRoundId].cardsRevealed);
+
         _setCurrentPhase(GamePhases.WaitingForDealer);
     }
 
@@ -175,10 +183,12 @@ contract PokerTable is IPokerTable, Ownable {
     /* ---------------------------- Private Functions --------------------------- */
 
     function _setCurrentPhase(GamePhases _newPhase) private {
+        GamePhases _previousPhase = currentPhase;
         if (_newPhase == GamePhases.WaitingForDealer) {
             _resetGameState();
             if (playerCount <= 1) {
                 currentPhase = GamePhases.WaitingForPlayers;
+                emit PhaseChanged(_newPhase, _previousPhase);
                 return;
             }
 
@@ -206,6 +216,8 @@ contract PokerTable is IPokerTable, Ownable {
         }
 
         currentPhase = _newPhase;
+
+        emit PhaseChanged(_newPhase, _previousPhase);
     }
 
     function _fold(uint256 playerIndex) private {
@@ -213,9 +225,12 @@ contract PokerTable is IPokerTable, Ownable {
         isPlayerIndexInRound[playerIndex] = false;
         playersLeftInRoundCount = --_playersLeftInRoundCount;
 
-        // TODO if last player fold, highest bettor won
+        emit PlayerFolded(playerIndex);
+
         if (_playersLeftInRoundCount == 1) {
-            playersBalance[playerIndices[highestBettorIndex]] += currentPot;
+            address player = playerIndices[highestBettorIndex];
+            playersBalance[player] += currentPot;
+            emit PlayerWonWithoutShowdown(player, highestBettorIndex, currentPot, currentPhase);
             _setCurrentPhase(GamePhases.WaitingForDealer);
         } else {
             currentBettorIndex = _findNextBettor(playerIndex);

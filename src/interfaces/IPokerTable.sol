@@ -17,6 +17,14 @@ interface IPokerTable {
     error NotEnoughBalance();
     error InvalidGains();
 
+    event PlayerJoined(address indexed player, uint256 buyIn, uint256 indexOnTable);
+    event PlayerLeft(address indexed player, uint256 amountWithdrawn, uint256 indexOnTable);
+    event PhaseChanged(GamePhases previousPhase, GamePhases newPhase);
+    event PlayerBet(address indexed player, uint256 indexOnTable, uint256 betAmount);
+    event PlayerFolded(uint256 indexOnTable);
+    event PlayerWonWithoutShowdown(address indexed winner, uint256 indexOnTable, uint256 pot, GamePhases phase);
+    event ShowdownEnded(RoundResult[] playersData, uint256 pot, string cardsRevealed);
+
     enum GamePhases {
         WaitingForPlayers,
         WaitingForDealer,
