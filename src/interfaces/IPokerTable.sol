@@ -23,7 +23,7 @@ interface IPokerTable {
     event PlayerBet(address indexed player, uint256 indexOnTable, uint256 betAmount);
     event PlayerFolded(uint256 indexOnTable);
     event PlayerWonWithoutShowdown(address indexed winner, uint256 indexOnTable, uint256 pot, GamePhases phase);
-    event ShowdownEnded(RoundResult[] playersData, uint256 pot, string cardsRevealed);
+    event ShowdownEnded(RoundResult[] playersData, uint256 pot, string communityCards);
 
     enum GamePhases {
         WaitingForPlayers,
@@ -44,7 +44,7 @@ interface IPokerTable {
     }
 
     struct RoundData {
-        string cardsRevealed;
+        string communityCards;
         RoundResult[] results;
     }
 }
