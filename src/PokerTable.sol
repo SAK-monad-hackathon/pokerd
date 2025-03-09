@@ -272,11 +272,12 @@ contract PokerTable is IPokerTable, Ownable {
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
             address player = playerIndices[i];
             if (player == address(0)) {
+                isPlayerIndexInRound[i] = false;
                 continue;
             }
 
             playerAmountInPot[player] = 0;
-            isPlayerIndexInRound[i] = true;
+            isPlayerIndexInRound[i] = playersBalance[player] > 0;
         }
 
         playersLeftInRoundCount = playerCount;
