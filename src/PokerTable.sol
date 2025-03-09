@@ -20,6 +20,9 @@ contract PokerTable is IPokerTable, Ownable {
     /// @notice Maximum buy-in (in Big Blinds)
     uint8 public constant MAX_BUY_IN_BB = 100;
 
+    /// @notice How many seconds needs to elapse before a player is force-folded
+    uint16 public constant PLAYER_TIMEOUT_AFTER = 30;
+
     /* ------------------------------- Immutables ------------------------------- */
 
     IERC20 public immutable currency;
@@ -131,15 +134,7 @@ contract PokerTable is IPokerTable, Ownable {
         require(currentBettorIndex == playerIndex, NotTurnOfPlayer());
         require(isPlayerIndexInRound[playerIndex], PlayerNotInHand());
 
-        uint256 _playersLeftInRoundCount = playersLeftInRoundCount;
-        isPlayerIndexInRound[playerIndex] = false;
-        playersLeftInRoundCount = --_playersLeftInRoundCount;
-
-        // TODO if last player fold, highest bettor won
-        if (_playersLeftInRoundCount == 1) {
-            playersBalance[playerIndices[highestBettorIndex]] += currentPot;
-            _setCurrentPhase(GamePhases.WaitingForDealer);
-        }
+        _fold(playerIndex);
     }
 
     function revealShowdownResult(RoundResult[] memory gains) external onlyOwner {
@@ -161,6 +156,10 @@ contract PokerTable is IPokerTable, Ownable {
         require(uint256(gainsAccumulator) == currentPot, InvalidGains());
 
         _setCurrentPhase(GamePhases.WaitingForDealer);
+    }
+
+    function timeoutCurrentPlayer() external onlyOwner {
+        _fold(currentBettorIndex);
     }
 
     /* ---------------------------- Private Functions --------------------------- */
@@ -194,6 +193,18 @@ contract PokerTable is IPokerTable, Ownable {
         }
 
         currentPhase = _newPhase;
+    }
+
+    function _fold(uint256 playerIndex) private {
+        uint256 _playersLeftInRoundCount = playersLeftInRoundCount;
+        isPlayerIndexInRound[playerIndex] = false;
+        playersLeftInRoundCount = --_playersLeftInRoundCount;
+
+        // TODO if last player fold, highest bettor won
+        if (_playersLeftInRoundCount == 1) {
+            playersBalance[playerIndices[highestBettorIndex]] += currentPot;
+            _setCurrentPhase(GamePhases.WaitingForDealer);
+        }
     }
 
     function _assignNextBlinds() private returns (uint256 SBIndex_, uint256 BBIndex_) {
