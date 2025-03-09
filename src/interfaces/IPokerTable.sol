@@ -9,6 +9,11 @@ interface IPokerTable {
     error NotEnoughPlayers();
     error InvalidBuyIn();
     error OccupiedSeat();
+    error NotTurnOfPlayer();
+    error PlayerNotInHand();
+    error BetTooSmall();
+    error InvalidBetAmount();
+    error NotEnoughBalance();
 
     enum GamePhases {
         WaitingForPlayers,
