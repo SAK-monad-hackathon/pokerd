@@ -172,6 +172,7 @@ contract PokerTable is IPokerTable, Ownable {
     }
 
     /* ---------------------------- Private Functions --------------------------- */
+
     function _setCurrentPhase(GamePhases _newPhase) private {
         if (_newPhase == GamePhases.WaitingForDealer) {
             _resetGameState();
@@ -185,12 +186,14 @@ contract PokerTable is IPokerTable, Ownable {
             // assign blinds and make players pay them
             // TODO handle cases where players don't have enough tokens to pay the blinds
             (uint256 _SBIndex, uint256 _BBIndex) = _assignNextBlinds();
+            address _bb = playerIndices[_BBIndex];
             currentPot += bigBlindPrice + (bigBlindPrice / 2);
-            playersBalance[playerIndices[_BBIndex]] -= bigBlindPrice;
+            playerAmountInPot[_bb] = bigBlindPrice;
+            playersBalance[_bb] -= bigBlindPrice;
 
             address _sb = playerIndices[_SBIndex];
             if (_sb != address(0)) {
-                playerAmountInPot[_sb] = bigBlindPrice;
+                playerAmountInPot[_sb] = bigBlindPrice / 2;
                 playersBalance[_sb] -= bigBlindPrice / 2;
             }
 
