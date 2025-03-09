@@ -38,4 +38,16 @@ contract BaseFixtures is Test {
             pokerTable.setCurrentPhase(IPokerTable.GamePhases(i), "");
         }
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                  Utilities                                 */
+    /* -------------------------------------------------------------------------- */
+
+    function assertEq(IPokerTable.GamePhases a, IPokerTable.GamePhases b) internal pure {
+        assertEq(a, b, "");
+    }
+
+    function assertEq(IPokerTable.GamePhases a, IPokerTable.GamePhases b, string memory err) internal pure {
+        assertEq(uint256(a), uint256(b), err);
+    }
 }
