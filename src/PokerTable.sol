@@ -216,6 +216,8 @@ contract PokerTable is IPokerTable, Ownable {
         if (_playersLeftInRoundCount == 1) {
             playersBalance[playerIndices[highestBettorIndex]] += currentPot;
             _setCurrentPhase(GamePhases.WaitingForDealer);
+        } else {
+            currentBettorIndex = _findNextBettor(playerIndex);
         }
     }
 
