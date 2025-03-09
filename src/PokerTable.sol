@@ -87,7 +87,7 @@ contract PokerTable is IPokerTable, Ownable {
         playersBalance[msg.sender] = 0;
 
         if (_playerBalance > 0) {
-            CURRENCY.transfer(msg.sender, _playerBalance);
+            CURRENCY.safeTransfer(msg.sender, _playerBalance);
         }
 
         emit PlayerLeft(msg.sender, _playerBalance, _playerIndex);
@@ -101,7 +101,8 @@ contract PokerTable is IPokerTable, Ownable {
             require(playerCount > 1, NotEnoughPlayers());
         }
 
-        roundData[currentRoundId].cardsRevealed = string.concat(roundData[currentRoundId].cardsRevealed, _cardsToReveal);
+        roundData[currentRoundId].communityCards =
+            string.concat(roundData[currentRoundId].communityCards, _cardsToReveal);
 
         _setCurrentPhase(_newPhase);
     }
@@ -130,6 +131,12 @@ contract PokerTable is IPokerTable, Ownable {
         // if the next player to bet is the highest bettor, all the players either folded or called.
         // which means the current phase ended, and the next phase can begin.
         if (_nextBettorIndex == highestBettorIndex) {
+            if (isPlayerIndexInRound[playerIndexWithBigBlind]) {
+                currentBettorIndex = playerIndexWithBigBlind;
+            } else {
+                currentBettorIndex = _findNextBettor(playerIndexWithBigBlind);
+            }
+
             _setCurrentPhase(GamePhases(uint256(currentPhase) + 1));
         }
 
@@ -162,7 +169,7 @@ contract PokerTable is IPokerTable, Ownable {
 
         require(uint256(gainsAccumulator) == currentPot, InvalidGains());
 
-        emit ShowdownEnded(gains, currentPot, roundData[currentRoundId].cardsRevealed);
+        emit ShowdownEnded(gains, currentPot, roundData[currentRoundId].communityCards);
 
         _setCurrentPhase(GamePhases.WaitingForDealer);
     }
