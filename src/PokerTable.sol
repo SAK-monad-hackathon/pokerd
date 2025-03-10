@@ -72,14 +72,16 @@ contract PokerTable is IPokerTable, Ownable {
 
         CURRENCY.safeTransferFrom(msg.sender, address(this), _buyIn);
 
-        emit PlayerJoined(msg.sender, _buyIn, _indexOnTable);
+        emit PlayerJoined(msg.sender, _buyIn, _indexOnTable, currentPhase);
     }
 
     function leaveTable() external {
         require(players[msg.sender], NotAPlayer());
+        uint256 _playerIndex = reversePlayerIndices[msg.sender];
+        // player should fold before trying to leave the table
+        require(!isPlayerIndexInRound[_playerIndex], PlayerStillPlaying());
 
         players[msg.sender] = false;
-        uint256 _playerIndex = reversePlayerIndices[msg.sender];
         reversePlayerIndices[msg.sender] = 0;
         playerIndices[_playerIndex] = address(0);
         --playerCount;
@@ -90,7 +92,7 @@ contract PokerTable is IPokerTable, Ownable {
             CURRENCY.safeTransfer(msg.sender, _playerBalance);
         }
 
-        emit PlayerLeft(msg.sender, _playerBalance, _playerIndex);
+        emit PlayerLeft(msg.sender, _playerBalance, _playerIndex, currentPhase);
     }
 
     function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external onlyOwner {

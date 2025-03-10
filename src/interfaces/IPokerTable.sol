@@ -11,14 +11,15 @@ interface IPokerTable {
     error InvalidBuyIn();
     error OccupiedSeat();
     error NotTurnOfPlayer();
+    error PlayerStillPlaying();
     error PlayerNotInHand();
     error BetTooSmall();
     error InvalidBetAmount();
     error NotEnoughBalance();
     error InvalidGains();
 
-    event PlayerJoined(address indexed player, uint256 buyIn, uint256 indexOnTable);
-    event PlayerLeft(address indexed player, uint256 amountWithdrawn, uint256 indexOnTable);
+    event PlayerJoined(address indexed player, uint256 buyIn, uint256 indexOnTable, GamePhases currentPhase);
+    event PlayerLeft(address indexed player, uint256 amountWithdrawn, uint256 indexOnTable, GamePhases currentPhase);
     event PhaseChanged(GamePhases previousPhase, GamePhases newPhase);
     event PlayerBet(address indexed player, uint256 indexOnTable, uint256 betAmount);
     event PlayerFolded(uint256 indexOnTable);
