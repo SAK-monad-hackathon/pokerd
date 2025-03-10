@@ -127,10 +127,18 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
 
         // reset should happen here
         assertEq(pokerTable.playersBalance(p0), maxBuyIn - sbAmount);
-        assertEq(pokerTable.playersBalance(p1), maxBuyIn - bbAmount - sbAmount, "p1"); // only lost BB but paid SB
-        assertEq(pokerTable.playersBalance(p2), maxBuyIn + pokerTable.BIG_BLIND_PRICE() * 9 + sbAmount, "p2"); // won prev round but paid BB
+        assertEq(pokerTable.playersBalance(p1), maxBuyIn - bbAmount, "p1");
+        assertEq(pokerTable.playersBalance(p2), maxBuyIn + pokerTable.BIG_BLIND_PRICE() * 10 + sbAmount, "p2");
         assertEq(pokerTable.playersBalance(p3), maxBuyIn, "p3");
         assertEq(pokerTable.playersBalance(p4), maxBuyIn - pokerTable.BIG_BLIND_PRICE() * 9);
+
+        // state should be back to WaitingForPlayers
+        assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForPlayers);
+
+        // start next round
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
+
+        assertEq(pokerTable.currentRoundId(), 1, "round ID shoudl equal 1");
         assertEq(pokerTable.playersLeftInRoundCount(), 5);
 
         // all players should be back in round
@@ -142,9 +150,6 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
 
         // blinds should have rotated
         assertEq(pokerTable.highestBettorIndex(), 2);
-        assertEq(pokerTable.currentBettorIndex(), 3);
-
-        // state should be back to WaitingForDealer
-        assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForDealer);
+        assertEq(pokerTable.currentBettorIndex(), 3, "currentBettorIndex");
     }
 }

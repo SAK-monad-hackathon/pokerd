@@ -92,20 +92,22 @@ contract PokerTableGameplayPreFlopFoldsTest is BaseFixtures {
         pokerTable.fold();
 
         // reset should happen here
-        assertEq(pokerTable.playersBalance(p1), maxBuyIn); // won prev pot but paid SB
-        assertEq(pokerTable.playersLeftInRoundCount(), 5);
+        assertEq(pokerTable.playersBalance(p1), maxBuyIn + pokerTable.SMALL_BLIND_PRICE());
+        assertEq(pokerTable.playersLeftInRoundCount(), 0);
 
         // all players should be back in round
-        assertTrue(pokerTable.isPlayerIndexInRound(0));
-        assertTrue(pokerTable.isPlayerIndexInRound(1));
-        assertTrue(pokerTable.isPlayerIndexInRound(2));
-        assertTrue(pokerTable.isPlayerIndexInRound(3));
-        assertTrue(pokerTable.isPlayerIndexInRound(4));
+        assertFalse(pokerTable.isPlayerIndexInRound(0));
+        assertFalse(pokerTable.isPlayerIndexInRound(1));
+        assertFalse(pokerTable.isPlayerIndexInRound(2));
+        assertFalse(pokerTable.isPlayerIndexInRound(3));
+        assertFalse(pokerTable.isPlayerIndexInRound(4));
+
+        pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
         // blinds should have rotated
         assertEq(pokerTable.highestBettorIndex(), 2);
         assertEq(pokerTable.currentBettorIndex(), 3);
-        assertEq(pokerTable.currentRoundId(), 2);
+        assertEq(pokerTable.currentRoundId(), 1);
 
         // state should be back to WaitingForDealer
         assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForDealer);

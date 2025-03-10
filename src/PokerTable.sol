@@ -95,10 +95,8 @@ contract PokerTable is IPokerTable, Ownable {
 
     function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external onlyOwner {
         GamePhases _currentPhase = currentPhase;
-        if (_newPhase != GamePhases.WaitingForDealer && _newPhase != GamePhases.WaitingForPlayers) {
+        if (_newPhase != GamePhases.WaitingForPlayers) {
             require(uint256(_newPhase) == uint256(_currentPhase) + 1, SkippingPhasesIsNotAllowed());
-        } else if (_currentPhase == GamePhases.WaitingForPlayers && _newPhase == GamePhases.WaitingForDealer) {
-            require(playerCount > 1, NotEnoughPlayers());
         }
 
         roundData[currentRoundId].communityCards =
@@ -165,7 +163,7 @@ contract PokerTable is IPokerTable, Ownable {
 
         emit ShowdownEnded(gains, currentPot, roundData[currentRoundId].communityCards);
 
-        _setCurrentPhase(GamePhases.WaitingForDealer);
+        _setCurrentPhase(GamePhases.WaitingForPlayers);
     }
 
     function timeoutCurrentPlayer() external onlyOwner {
@@ -178,22 +176,28 @@ contract PokerTable is IPokerTable, Ownable {
             playersBalance[player] += playerAmountInPot[player];
         }
 
-        _setCurrentPhase(GamePhases.WaitingForDealer);
+        _setCurrentPhase(GamePhases.WaitingForPlayers);
     }
 
     /* ---------------------------- Private Functions --------------------------- */
 
     function _setCurrentPhase(GamePhases _newPhase) private {
         GamePhases _previousPhase = currentPhase;
-        if (_newPhase == GamePhases.WaitingForDealer) {
+        if (_newPhase == GamePhases.WaitingForPlayers) {
             _resetGameState();
-            if (playerCount <= 1) {
-                currentPhase = GamePhases.WaitingForPlayers;
-                emit PhaseChanged(_newPhase, _previousPhase);
-                return;
+            ++currentRoundId;
+        } else if (_newPhase == GamePhases.WaitingForDealer) {
+            uint256 _playersLeftInRoundCount = 0;
+            for (uint256 i = 0; i < MAX_PLAYERS; i++) {
+                address _playerAddress = playerIndices[i];
+                if (_playerAddress != address(0) && playersBalance[_playerAddress] > 0) {
+                    isPlayerIndexInRound[i] = true;
+                    ++_playersLeftInRoundCount;
+                }
             }
 
-            ++currentRoundId;
+            playersLeftInRoundCount = _playersLeftInRoundCount;
+            require(_playersLeftInRoundCount > 1, NotEnoughPlayers());
 
             // assign blinds and make players pay them
             // TODO handle cases where players don't have enough tokens to pay the blinds
@@ -212,8 +216,6 @@ contract PokerTable is IPokerTable, Ownable {
             highestBettorIndex = _BBIndex;
             currentBettorIndex = _findNextBettorIndex(_BBIndex);
             amountToCall = BIG_BLIND_PRICE;
-        } else if (_newPhase == GamePhases.WaitingForPlayers) {
-            _resetGameState();
         }
 
         currentPhase = _newPhase;
@@ -267,7 +269,7 @@ contract PokerTable is IPokerTable, Ownable {
             address player = playerIndices[highestBettorIndex];
             playersBalance[player] += currentPot;
             emit PlayerWonWithoutShowdown(player, highestBettorIndex, currentPot, currentPhase);
-            _setCurrentPhase(GamePhases.WaitingForDealer);
+            _setCurrentPhase(GamePhases.WaitingForPlayers);
         } else {
             currentBettorIndex = _findNextBettorIndex(playerIndex);
         }
@@ -278,7 +280,7 @@ contract PokerTable is IPokerTable, Ownable {
         SBIndex_ = _currentBB;
         BBIndex_ = _currentBB + 1;
 
-        while (playerIndices[BBIndex_] == address(0) || playersBalance[playerIndices[BBIndex_]] == 0) {
+        while (!isPlayerIndexInRound[BBIndex_]) {
             if (BBIndex_ >= MAX_PLAYERS) {
                 BBIndex_ = 0;
             } else {
@@ -322,17 +324,12 @@ contract PokerTable is IPokerTable, Ownable {
 
     function _resetGameState() private {
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
-            address player = playerIndices[i];
-            if (player == address(0)) {
-                isPlayerIndexInRound[i] = false;
-                continue;
-            }
-
-            playerAmountInPot[player] = 0;
-            isPlayerIndexInRound[i] = playersBalance[player] > 0;
+            address _player = playerIndices[i];
+            playerAmountInPot[_player] = 0;
+            isPlayerIndexInRound[i] = false;
         }
 
-        playersLeftInRoundCount = playerCount;
+        playersLeftInRoundCount = 0;
         amountToCall = 0;
         currentPot = 0;
     }
