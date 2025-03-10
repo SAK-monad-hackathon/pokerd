@@ -125,30 +125,24 @@ contract PokerTable is IPokerTable, Ownable {
         playersBalance[msg.sender] -= _amount;
         playerAmountInPot[msg.sender] = _playerBets + _amount;
         currentPot += _amount;
-        uint256 _nextBettorIndex = _findNextBettor(_currentBettorIndex);
-        currentBettorIndex = _nextBettorIndex;
-
-        // if the next player to bet is the highest bettor, all the players either folded or called.
-        // which means the current phase ended, and the next phase can begin.
-        if (_nextBettorIndex == highestBettorIndex) {
-            if (isPlayerIndexInRound[playerIndexWithBigBlind]) {
-                currentBettorIndex = playerIndexWithBigBlind;
-            } else {
-                currentBettorIndex = _findNextBettor(playerIndexWithBigBlind);
-            }
-
-            _setCurrentPhase(GamePhases(uint256(currentPhase) + 1));
-        }
 
         emit PlayerBet(msg.sender, _currentBettorIndex, _amount);
+
+        uint256 _nextBettorIndex = _findNextBettorIndex(_currentBettorIndex);
+        currentBettorIndex = _nextBettorIndex;
+        _advancePhaseIfNeeded(_nextBettorIndex);
     }
 
     function fold() external {
-        uint256 playerIndex = reversePlayerIndices[msg.sender];
-        require(currentBettorIndex == playerIndex, NotTurnOfPlayer());
-        require(isPlayerIndexInRound[playerIndex], PlayerNotInHand());
+        uint256 _playerIndex = reversePlayerIndices[msg.sender];
+        require(currentBettorIndex == _playerIndex, NotTurnOfPlayer());
+        require(isPlayerIndexInRound[_playerIndex], PlayerNotInHand());
 
-        _fold(playerIndex);
+        _fold(_playerIndex);
+
+        if (currentPhase != GamePhases.WaitingForPlayers) {
+            _advancePhaseIfNeeded(_playerIndex);
+        }
     }
 
     function revealShowdownResult(RoundResult[] memory gains) external onlyOwner {
@@ -216,7 +210,7 @@ contract PokerTable is IPokerTable, Ownable {
             }
 
             highestBettorIndex = _BBIndex;
-            currentBettorIndex = _findNextBettor(_BBIndex);
+            currentBettorIndex = _findNextBettorIndex(_BBIndex);
             amountToCall = BIG_BLIND_PRICE;
         } else if (_newPhase == GamePhases.WaitingForPlayers) {
             _resetGameState();
@@ -225,6 +219,41 @@ contract PokerTable is IPokerTable, Ownable {
         currentPhase = _newPhase;
 
         emit PhaseChanged(_newPhase, _previousPhase);
+    }
+
+    function _advancePhaseIfNeeded(uint256 _nextBettorIndex) private {
+        uint256 _playerIndexWithBigBlind = playerIndexWithBigBlind;
+        uint256 _highestBettorIndex = highestBettorIndex;
+
+        // The big blind is allowed to act even if a player calls during the Pre-Flop phase
+        if (
+            currentPhase == GamePhases.PreFlop && _nextBettorIndex == _highestBettorIndex
+                && _nextBettorIndex == _playerIndexWithBigBlind
+                && playerAmountInPot[playerIndices[_playerIndexWithBigBlind]] == BIG_BLIND_PRICE
+        ) {
+            // in that particular case set the `highestBettorIndex` to the next player because the phase needs to advance once it's its turn
+            highestBettorIndex = _findNextBettorIndex(_playerIndexWithBigBlind);
+            return;
+        }
+
+        if (_nextBettorIndex != _highestBettorIndex) {
+            return;
+        }
+
+        // if the next player to bet is the highest bettor, all the players either folded or called.
+        // which means the current phase ended, and the next phase can begin.
+
+        // first player to act in a round is the SB, or the next player still in play
+        _nextBettorIndex = _findSmallBlind(playerIndexWithBigBlind);
+        if (!isPlayerIndexInRound[_nextBettorIndex]) {
+            _nextBettorIndex = _findNextBettorIndex(_nextBettorIndex);
+            highestBettorIndex = _nextBettorIndex;
+        }
+
+        highestBettorIndex = _nextBettorIndex;
+        currentBettorIndex = _nextBettorIndex;
+
+        _setCurrentPhase(GamePhases(uint256(currentPhase) + 1));
     }
 
     function _fold(uint256 playerIndex) private {
@@ -240,7 +269,7 @@ contract PokerTable is IPokerTable, Ownable {
             emit PlayerWonWithoutShowdown(player, highestBettorIndex, currentPot, currentPhase);
             _setCurrentPhase(GamePhases.WaitingForDealer);
         } else {
-            currentBettorIndex = _findNextBettor(playerIndex);
+            currentBettorIndex = _findNextBettorIndex(playerIndex);
         }
     }
 
@@ -261,7 +290,7 @@ contract PokerTable is IPokerTable, Ownable {
         return (SBIndex_, BBIndex_);
     }
 
-    function _findNextBettor(uint256 _currentBettorIndex) private view returns (uint256 nextPlayerIndex_) {
+    function _findNextBettorIndex(uint256 _currentBettorIndex) private view returns (uint256 nextPlayerIndex_) {
         nextPlayerIndex_ = _currentBettorIndex + 1;
         while (
             (!isPlayerIndexInRound[nextPlayerIndex_] || playersBalance[playerIndices[nextPlayerIndex_]] == 0)
@@ -271,6 +300,22 @@ contract PokerTable is IPokerTable, Ownable {
                 nextPlayerIndex_ = 0;
             } else {
                 ++nextPlayerIndex_;
+            }
+        }
+    }
+
+    function _findSmallBlind(uint256 _bigBlindIndex) private view returns (uint256 smallBlindIndex_) {
+        if (_bigBlindIndex == 0) {
+            smallBlindIndex_ = MAX_PLAYERS - 1;
+        } else {
+            smallBlindIndex_ = _bigBlindIndex - 1;
+        }
+
+        while (playerAmountInPot[playerIndices[smallBlindIndex_]] == 0 && smallBlindIndex_ != _bigBlindIndex) {
+            if (smallBlindIndex_ == 0) {
+                smallBlindIndex_ = MAX_PLAYERS - 1;
+            } else {
+                --smallBlindIndex_;
             }
         }
     }
