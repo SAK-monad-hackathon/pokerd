@@ -16,7 +16,7 @@ interface IPokerTable {
     error BetTooSmall();
     error InvalidBetAmount();
     error NotEnoughBalance();
-    error InvalidGains();
+    error InvalidShowdownResults();
 
     event PlayerJoined(address indexed player, uint256 buyIn, uint256 indexOnTable, GamePhases currentPhase);
     event PlayerLeft(address indexed player, uint256 amountWithdrawn, uint256 indexOnTable, GamePhases currentPhase);
@@ -24,7 +24,7 @@ interface IPokerTable {
     event PlayerBet(address indexed player, uint256 indexOnTable, uint256 betAmount);
     event PlayerFolded(uint256 indexOnTable);
     event PlayerWonWithoutShowdown(address indexed winner, uint256 indexOnTable, uint256 pot, GamePhases phase);
-    event ShowdownEnded(RoundResult[] playersData, uint256 pot, string communityCards);
+    event ShowdownEnded(PlayerResult[] playersData, uint256 pot, string communityCards);
 
     enum GamePhases {
         WaitingForPlayers,
@@ -39,13 +39,13 @@ interface IPokerTable {
         WaitingForResult
     }
 
-    struct RoundResult {
+    struct PlayerResult {
         int256 gains;
         string cards;
     }
 
     struct RoundData {
         string communityCards;
-        RoundResult[] results;
+        PlayerResult[] results;
     }
 }

@@ -145,25 +145,27 @@ contract PokerTable is IPokerTable, Ownable {
         }
     }
 
-    function revealShowdownResult(RoundResult[] memory gains) external onlyOwner {
+    function revealShowdownResult(string[] calldata _cards, uint256[] calldata _winners) external onlyOwner {
         require(currentPhase == GamePhases.WaitingForResult, InvalidState(currentPhase, GamePhases.WaitingForResult));
-        require(gains.length == MAX_PLAYERS, InvalidGains());
-        int256 gainsAccumulator;
+        require(_cards.length == MAX_PLAYERS, InvalidShowdownResults());
+        require(_winners.length <= MAX_PLAYERS && _winners.length > 0, InvalidShowdownResults());
+        // TODO optimize
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
-            address _player = playerIndices[i];
-            int256 _playerGains = gains[i].gains;
-            require(_playerGains >= 0, InvalidGains());
-            gainsAccumulator += _playerGains;
-
-            if (_playerGains > 0) {
-                playersBalance[_player] += uint256(_playerGains);
-            }
-            roundData[currentRoundId].results[i].gains = _playerGains - int256(playerAmountInPot[_player]);
+            address _playerAddress = playerIndices[i];
+            roundData[currentRoundId].results.push(
+                PlayerResult({cards: _cards[i], gains: -int256(playerAmountInPot[_playerAddress])})
+            );
         }
 
-        require(uint256(gainsAccumulator) == currentPot, InvalidGains());
+        // TODO some dust left because of division, assign to fees?
+        uint256 amountPerWinner = currentPot / _winners.length;
+        for (uint256 i = 0; i < _winners.length; i++) {
+            address _playerAddress = playerIndices[_winners[i]];
+            roundData[currentRoundId].results[i].gains += int256(amountPerWinner);
+            playersBalance[_playerAddress] += amountPerWinner;
+        }
 
-        emit ShowdownEnded(gains, currentPot, roundData[currentRoundId].communityCards);
+        emit ShowdownEnded(roundData[currentRoundId].results, currentPot, roundData[currentRoundId].communityCards);
 
         _setCurrentPhase(GamePhases.WaitingForPlayers);
     }
@@ -177,6 +179,8 @@ contract PokerTable is IPokerTable, Ownable {
             address player = playerIndices[i];
             playersBalance[player] += playerAmountInPot[player];
         }
+
+        _resetGameState();
 
         _setCurrentPhase(GamePhases.WaitingForPlayers);
     }
