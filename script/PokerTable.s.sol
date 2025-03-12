@@ -18,8 +18,8 @@ contract PokerTableScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        // default to 1 WMON as BB
-        pokerTable = new PokerTable(IERC20(WRAPPED_MONAD), 1 ether);
+        // default to 0.0001 WMON as BB
+        pokerTable = new PokerTable(IERC20(WRAPPED_MONAD), 0.0001 ether);
 
         vm.stopBroadcast();
     }
