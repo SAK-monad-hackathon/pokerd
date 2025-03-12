@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin-contracts-5/token/ERC20/IERC20.sol";
 
 import {PokerTable} from "../src/PokerTable.sol";
 
-contract CounterScript is Script {
+contract PokerTableScript is Script {
     address constant WRAPPED_MONAD = 0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701;
 
     PokerTable public pokerTable;

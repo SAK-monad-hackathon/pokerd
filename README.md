@@ -64,3 +64,13 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+
+### Info monad
+
+link to add to metamask: https://testnet.monad.xyz/break-monad
+
+### Command
+
+```shell
+forge create --private-key <your_private_key> src/PokerTable.s.sol:PokerTableScript --broadcast
+```
