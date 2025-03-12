@@ -165,7 +165,7 @@ contract PokerTable is IPokerTable, Ownable {
         uint256 amountPerWinner = currentPot / _winners.length;
         for (uint256 i = 0; i < _winners.length; i++) {
             address _playerAddress = playerIndices[_winners[i]];
-            roundData[currentRoundId].results[i].gains += int256(amountPerWinner);
+            roundData[currentRoundId].results[_winners[i]].gains += int256(amountPerWinner);
             playersBalance[_playerAddress] += amountPerWinner;
         }
 
