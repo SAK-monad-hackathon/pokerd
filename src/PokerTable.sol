@@ -57,6 +57,10 @@ contract PokerTable is IPokerTable, Ownable {
         SMALL_BLIND_PRICE = _bigBlindPrice / 2;
     }
 
+    function getRoundData(uint256 _roundId) external view returns (RoundData memory) {
+        return roundData[_roundId];
+    }
+
     function joinTable(uint256 _buyIn, uint256 _indexOnTable) external {
         uint256 _bigBlindPrice = BIG_BLIND_PRICE;
         require(playerCount < MAX_PLAYERS, TableIsFull());

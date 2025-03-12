@@ -76,6 +76,7 @@ interface IPokerTable {
     function highestBettorIndex() external view returns (uint256);
     function amountToCall() external view returns (uint256);
 
+    function getRoundData(uint256 roundId) external view returns (RoundData memory);
     function joinTable(uint256 _buyIn, uint256 _indexOnTable) external;
     function leaveTable() external;
     function setCurrentPhase(GamePhases _newPhase, string calldata _cardsToReveal) external;
