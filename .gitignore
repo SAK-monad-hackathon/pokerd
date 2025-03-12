@@ -4,6 +4,7 @@ out/
 
 # Dependencies
 dependencies/
+lib/
 
 # Ignores development broadcast logs
 !/broadcast
