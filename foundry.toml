@@ -1,7 +1,7 @@
 [profile.default]
 src = "src"
 out = "out"
-libs = ["lib", "dependencies"]
+libs = ["dependencies"]
 auto_detect_solc = true
 
 # Monad Testnet Configuration
