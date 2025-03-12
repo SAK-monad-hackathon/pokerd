@@ -149,6 +149,30 @@ contract PokerTableGameplayPreFlopCallsAndRestIsChecksToShowdownTest is BaseFixt
             pokerTable.bet(0);
         }
 
+        string memory _communityCards = pokerTable.roundData(0);
+
+        string[] memory _cards = new string[](5);
+        _cards[0] = "AsAh";
+        _cards[1] = "KsKh";
+        _cards[2] = "QsQh";
+        _cards[3] = "JsJh";
+        _cards[4] = "TsTh";
+
+        uint256[] memory _winners = new uint256[](2);
+        _winners[0] = 1;
+        _winners[1] = 2;
+
+        IPokerTable.PlayerResult[] memory _results = new IPokerTable.PlayerResult[](5);
+        _results[0] = IPokerTable.PlayerResult({cards: _cards[0], gains: -int256(bbAmount)});
+        _results[1] = IPokerTable.PlayerResult({cards: _cards[1], gains: int256(bbAmount) + int256(sbAmount)});
+        _results[2] = IPokerTable.PlayerResult({cards: _cards[2], gains: int256(bbAmount) + int256(sbAmount)});
+        _results[3] = IPokerTable.PlayerResult({cards: _cards[3], gains: -int256(bbAmount)});
+        _results[4] = IPokerTable.PlayerResult({cards: _cards[4], gains: -int256(bbAmount)});
+
         assertEq(pokerTable.currentPhase(), IPokerTable.GamePhases.WaitingForResult, "phase WaitingForResult");
+
+        vm.expectEmit();
+        emit IPokerTable.ShowdownEnded(_results, bbAmount * 5, _communityCards);
+        pokerTable.revealShowdownResult(_cards, _winners);
     }
 }
