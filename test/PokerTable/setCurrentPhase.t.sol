@@ -11,9 +11,6 @@ import {BaseFixtures} from "../utils/BaseFixtures.sol";
 import {MockERC20} from "../utils/MockERC20.sol";
 
 contract PokerTableSetCurrentPhaseTest is BaseFixtures {
-    address player1 = address(1);
-    address player2 = address(2);
-
     function setUp() public override {
         super.setUp();
 
@@ -46,7 +43,7 @@ contract PokerTableSetCurrentPhaseTest is BaseFixtures {
         assertEq(_roundData, "test string");
     }
 
-    function test_setCurrentPhaseConcantenateCardsRevealed() public {
+    function test_setCurrentPhaseConcatenateCardsRevealed() public {
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop, "A");
 
