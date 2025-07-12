@@ -138,7 +138,7 @@ contract PokerTableGameplayPreFlopBetsThenFoldsTest is BaseFixtures {
         // start next round
         pokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
 
-        assertEq(pokerTable.currentRoundId(), 1, "round ID shoudl equal 1");
+        assertEq(pokerTable.currentRoundId(), 1, "round ID should equal 1");
         assertEq(pokerTable.playersLeftInRoundCount(), 5);
 
         // all players should be back in round

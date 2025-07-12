@@ -14,6 +14,11 @@ contract BaseFixtures is Test {
     PokerTable pokerTable;
     IERC20 CURRENCY;
 
+    address player1 = address(1);
+    address player2 = address(2);
+    address player3 = address(3);
+    address feeCollector = address(99);
+
     function setUp() public virtual {
         CURRENCY = new MockERC20();
         pokerTable = new PokerTable(CURRENCY, 1 ether);
@@ -34,7 +39,7 @@ contract BaseFixtures is Test {
             return;
         }
 
-        for (uint256 i = _fromPhase + 1; i < uint256(_toPhase); i++) {
+        for (uint256 i = _fromPhase + 1; i <= uint256(_toPhase); i++) {
             pokerTable.setCurrentPhase(IPokerTable.GamePhases(i), "");
         }
     }

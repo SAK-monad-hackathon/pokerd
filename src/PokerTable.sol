@@ -47,6 +47,7 @@ contract PokerTable is IPokerTable, Ownable {
     uint256 public currentPot;
     uint256 public highestBettorIndex;
     uint256 public amountToCall;
+    address public feeCollector;
 
     constructor(IERC20 _currency, uint256 _bigBlindPrice) Ownable(msg.sender) {
         CURRENCY = _currency;
@@ -161,12 +162,16 @@ contract PokerTable is IPokerTable, Ownable {
             );
         }
 
-        // TODO some dust left because of division, assign to fees?
+        // Distribute pot to winners and collect fees
         uint256 amountPerWinner = currentPot / _winners.length;
+        uint256 fees = currentPot % _winners.length;
         for (uint256 i = 0; i < _winners.length; i++) {
             address _playerAddress = playerIndices[_winners[i]];
             roundData[currentRoundId].results[_winners[i]].gains += int256(amountPerWinner);
             playersBalance[_playerAddress] += amountPerWinner;
+        }
+        if (fees > 0) {
+            CURRENCY.safeTransfer(feeCollector, fees);
         }
 
         emit ShowdownEnded(roundData[currentRoundId].results, currentPot, roundData[currentRoundId].communityCards);
@@ -176,6 +181,10 @@ contract PokerTable is IPokerTable, Ownable {
 
     function timeoutCurrentPlayer() external onlyOwner {
         _fold(currentBettorIndex);
+    }
+
+    function setFeeCollector(address _feeCollector) external onlyOwner {
+        feeCollector = _feeCollector;
     }
 
     function cancelCurrentRound() external onlyOwner {
