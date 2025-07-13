@@ -70,16 +70,15 @@ contract PokerTableRevealShowdownResultTest is BaseFixtures {
     }
 
     function test_feeCollectionWithGuaranteedOddPot() public {
-        // Create a scenario with guaranteed fees by making pot = 7 wei with 3 winners
-        // 7 wei / 3 = 2 wei each, 1 wei fees
+        // Create a specific scenario to generate fees by having a side pot amount that
+        // doesn't divide evenly among the eligible winners. We'll use unusual bet amounts.
 
-        // Deploy a new table with smaller blinds to test with smaller amounts
         PokerTable smallPokerTable = new PokerTable(CURRENCY, 7); // BIG_BLIND = 7, SMALL_BLIND = 3
         smallPokerTable.setFeeCollector(feeCollector);
 
-        // Add 3 players to the small table
         uint256 minBuyIn = smallPokerTable.MIN_BUY_IN_BB() * smallPokerTable.BIG_BLIND_PRICE();
 
+        // Setup 3 players
         vm.startPrank(player1);
         CURRENCY.approve(address(smallPokerTable), minBuyIn);
         MockERC20(address(CURRENCY)).mint(player1, minBuyIn);
@@ -98,11 +97,21 @@ contract PokerTableRevealShowdownResultTest is BaseFixtures {
         smallPokerTable.joinTable(minBuyIn, 2);
         vm.stopPrank();
 
-        // Go to WaitingForDealer (pot will be 7 + 3 = 10)
+        // Start the game - creates: player1: 3 (SB), player2: 7 (BB), player3: 0
         smallPokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForDealer, "");
-
-        // Go through all phases to reach WaitingForResult
         smallPokerTable.setCurrentPhase(IPokerTable.GamePhases.PreFlop, "");
+
+        // Player3 calls BB (bets 7 to match): player1: 3, player2: 7, player3: 7
+        vm.prank(player3);
+        smallPokerTable.bet(7);
+
+        // Player1 calls BB (bets 4 more to reach 7): player1: 7, player2: 7, player3: 7
+        vm.prank(player1);
+        smallPokerTable.bet(4);
+
+        // Player2 checks (already at 7)
+
+        // Skip to showdown
         smallPokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForFlop, "");
         smallPokerTable.setCurrentPhase(IPokerTable.GamePhases.Flop, "");
         smallPokerTable.setCurrentPhase(IPokerTable.GamePhases.WaitingForTurn, "");
@@ -113,31 +122,34 @@ contract PokerTableRevealShowdownResultTest is BaseFixtures {
 
         uint256 initialFeeCollectorBalance = CURRENCY.balanceOf(feeCollector);
 
-        // Pot = 10, with 3 winners: 10/3 = 3 each, 1 fee
+        // Total pot is 21 wei (7 + 7 + 7)
         uint256 currentPotValue = smallPokerTable.currentPot();
-        assertEq(currentPotValue, 10); // 7 (BB) + 3 (SB) = 10
+        assertEq(currentPotValue, 21);
 
-        uint256 expectedFees = currentPotValue % 3; // 10 % 3 = 1
-        assertEq(expectedFees, 1); // Should have 1 wei fees
+        // All players contributed 7 wei each, so there's only one side pot level:
+        // - Level 7: 7 wei * 3 players = 21 wei, eligible to all 3
 
         string[] memory cards = new string[](5);
         cards[0] = "AsKs"; // player1 wins
         cards[1] = "QhQd"; // player2 wins
-        cards[2] = "JcJh"; // player3 wins
+        cards[2] = "2c3h"; // player3 loses (to create uneven division)
         cards[3] = "";
         cards[4] = "";
 
-        uint256[] memory winners = new uint256[](3);
+        // Only 2 winners for the 21 wei pot: 21 ÷ 2 = 10 each + 1 remainder = 1 fee
+        uint256[] memory winners = new uint256[](2);
         winners[0] = 0; // player1
         winners[1] = 1; // player2
-        winners[2] = 2; // player3
 
         smallPokerTable.revealShowdownResult(cards, winners);
 
         uint256 finalFeeCollectorBalance = CURRENCY.balanceOf(feeCollector);
+        uint256 feesCollected = finalFeeCollectorBalance - initialFeeCollectorBalance;
 
-        assertEq(finalFeeCollectorBalance - initialFeeCollectorBalance, 1);
-        assertEq(finalFeeCollectorBalance - initialFeeCollectorBalance, expectedFees);
+        // Expected: 21 wei ÷ 2 eligible winners = 10 each + 1 remainder
+        assertEq(feesCollected, 1, "Should collect 1 wei fee from 21 divided by 2 = 1 remainder");
+        // Verify fees are collected when division creates remainder
+        assertTrue(feesCollected > 0, "Fees should be collected when pot doesn't divide evenly among winners");
     }
 
     function test_setFeeCollector() public {

@@ -46,9 +46,15 @@ interface IPokerTable {
         string cards;
     }
 
+    struct SidePot {
+        uint256 amount;
+        address[] eligiblePlayers;
+    }
+
     struct RoundData {
         string communityCards;
         PlayerResult[] results;
+        SidePot[] sidePots;
     }
 
     function MAX_PLAYERS() external view returns (uint8);
