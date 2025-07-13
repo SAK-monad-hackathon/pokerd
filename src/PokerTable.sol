@@ -121,7 +121,7 @@ contract PokerTable is IPokerTable, Ownable {
         uint256 _playerBets = playerAmountInPot[msg.sender];
         uint256 _minBet = amountToCall - _playerBets;
         uint256 _playerBalance = playersBalance[msg.sender];
-        
+
         // Check if player is trying to bet less than minimum (unless going all-in)
         if (_amount < _minBet && _amount < _playerBalance) {
             revert BetTooSmall();
@@ -146,7 +146,7 @@ contract PokerTable is IPokerTable, Ownable {
         emit PlayerBet(msg.sender, _currentBettorIndex, _amount);
 
         uint256 _nextBettorIndex = _findNextBettorIndex(_currentBettorIndex);
-        
+
         // Check if we should advance phase due to all-in situation
         if (isAllIn) {
             _checkAllInAdvancePhase(_nextBettorIndex);
@@ -172,7 +172,7 @@ contract PokerTable is IPokerTable, Ownable {
         require(currentPhase == GamePhases.WaitingForResult, InvalidState(currentPhase, GamePhases.WaitingForResult));
         require(_cards.length == MAX_PLAYERS, InvalidShowdownResults());
         require(_winners.length <= MAX_PLAYERS && _winners.length > 0, InvalidShowdownResults());
-        
+
         // Initialize results array
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
             address _playerAddress = playerIndices[i];
@@ -183,7 +183,7 @@ contract PokerTable is IPokerTable, Ownable {
 
         // Calculate side pots
         SidePot[] memory sidePots = _calculateSidePots();
-        
+
         // Store side pots in storage individually
         delete roundData[currentRoundId].sidePots;
         for (uint256 i = 0; i < sidePots.length; i++) {
@@ -194,14 +194,14 @@ contract PokerTable is IPokerTable, Ownable {
         uint256 totalFees = 0;
         for (uint256 potIndex = 0; potIndex < sidePots.length; potIndex++) {
             SidePot memory pot = sidePots[potIndex];
-            
+
             // Find winners eligible for this pot
             uint256 eligibleWinnersCount = 0;
             uint256[] memory eligibleWinners = new uint256[](pot.eligiblePlayers.length);
-            
+
             for (uint256 i = 0; i < _winners.length; i++) {
                 address winnerAddress = playerIndices[_winners[i]];
-                
+
                 // Check if this winner is eligible for this pot
                 for (uint256 j = 0; j < pot.eligiblePlayers.length; j++) {
                     if (pot.eligiblePlayers[j] == winnerAddress) {
@@ -211,12 +211,12 @@ contract PokerTable is IPokerTable, Ownable {
                     }
                 }
             }
-            
+
             if (eligibleWinnersCount > 0) {
                 uint256 amountPerWinner = pot.amount / eligibleWinnersCount;
                 uint256 remainder = pot.amount % eligibleWinnersCount;
                 totalFees += remainder;
-                
+
                 for (uint256 i = 0; i < eligibleWinnersCount; i++) {
                     uint256 winnerIndex = eligibleWinners[i];
                     address winnerAddress = playerIndices[winnerIndex];
@@ -262,15 +262,15 @@ contract PokerTable is IPokerTable, Ownable {
         // Check if all remaining players are all-in or have called
         bool allPlayersActed = true;
         uint256 activeNonAllInCount = 0;
-        
+
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
             if (isPlayerIndexInRound[i]) {
                 address player = playerIndices[i];
-                
+
                 // Count non-all-in players with balance > 0
                 if (!isPlayerAllIn[player] && playersBalance[player] > 0) {
                     activeNonAllInCount++;
-                    
+
                     // If player hasn't called the current amount, not all players have acted
                     if (playerAmountInPot[player] < amountToCall) {
                         allPlayersActed = false;
@@ -278,7 +278,7 @@ contract PokerTable is IPokerTable, Ownable {
                 }
             }
         }
-        
+
         // Only advance phase if there are no active non-all-in players left to act
         // OR if all non-all-in players have already called
         if (activeNonAllInCount == 0 || (allPlayersActed && activeNonAllInCount > 0)) {
@@ -413,10 +413,10 @@ contract PokerTable is IPokerTable, Ownable {
     function _findNextBettorIndex(uint256 _currentBettorIndex) private view returns (uint256 nextPlayerIndex_) {
         nextPlayerIndex_ = _currentBettorIndex + 1;
         while (
-            (!isPlayerIndexInRound[nextPlayerIndex_] 
-             || playersBalance[playerIndices[nextPlayerIndex_]] == 0
-             || isPlayerAllIn[playerIndices[nextPlayerIndex_]])
-                && nextPlayerIndex_ != _currentBettorIndex
+            (
+                !isPlayerIndexInRound[nextPlayerIndex_] || playersBalance[playerIndices[nextPlayerIndex_]] == 0
+                    || isPlayerAllIn[playerIndices[nextPlayerIndex_]]
+            ) && nextPlayerIndex_ != _currentBettorIndex
         ) {
             if (nextPlayerIndex_ >= MAX_PLAYERS) {
                 nextPlayerIndex_ = 0;
@@ -459,12 +459,12 @@ contract PokerTable is IPokerTable, Ownable {
         // Get all different bet amounts, sorted ascending
         uint256[] memory betAmounts = new uint256[](MAX_PLAYERS);
         uint256 uniqueBetsCount = 0;
-        
+
         for (uint256 i = 0; i < MAX_PLAYERS; i++) {
             address player = playerIndices[i];
             if (player != address(0) && isPlayerIndexInRound[i]) {
                 uint256 playerBet = playerAmountInPot[player];
-                
+
                 // Only include players who actually contributed money
                 if (playerBet > 0) {
                     // Check if this bet amount is already recorded
@@ -475,7 +475,7 @@ contract PokerTable is IPokerTable, Ownable {
                             break;
                         }
                     }
-                    
+
                     if (!found) {
                         // Insert in sorted order
                         uint256 insertIndex = uniqueBetsCount;
@@ -485,55 +485,58 @@ contract PokerTable is IPokerTable, Ownable {
                                 break;
                             }
                         }
-                        
+
                         // Shift elements to make room
                         for (uint256 j = uniqueBetsCount; j > insertIndex; j--) {
                             betAmounts[j] = betAmounts[j - 1];
                         }
-                        
+
                         betAmounts[insertIndex] = playerBet;
                         uniqueBetsCount++;
                     }
                 }
             }
         }
-        
+
         // Create side pots
         sidePots = new SidePot[](uniqueBetsCount);
         uint256 previousAmount = 0;
-        
+
         for (uint256 level = 0; level < uniqueBetsCount; level++) {
             uint256 currentAmount = betAmounts[level];
             uint256 potIncrement = currentAmount - previousAmount;
-            
+
             // Count eligible players for this level (players who contributed at least currentAmount)
             uint256 eligibleCount = 0;
             for (uint256 i = 0; i < MAX_PLAYERS; i++) {
                 address player = playerIndices[i];
-                if (player != address(0) && isPlayerIndexInRound[i] && playerAmountInPot[player] >= currentAmount && playerAmountInPot[player] > 0) {
+                if (
+                    player != address(0) && isPlayerIndexInRound[i] && playerAmountInPot[player] >= currentAmount
+                        && playerAmountInPot[player] > 0
+                ) {
                     eligibleCount++;
                 }
             }
-            
+
             // Create eligible players array
             address[] memory eligiblePlayers = new address[](eligibleCount);
             uint256 index = 0;
             for (uint256 i = 0; i < MAX_PLAYERS; i++) {
                 address player = playerIndices[i];
-                if (player != address(0) && isPlayerIndexInRound[i] && playerAmountInPot[player] >= currentAmount && playerAmountInPot[player] > 0) {
+                if (
+                    player != address(0) && isPlayerIndexInRound[i] && playerAmountInPot[player] >= currentAmount
+                        && playerAmountInPot[player] > 0
+                ) {
                     eligiblePlayers[index] = player;
                     index++;
                 }
             }
-            
-            sidePots[level] = SidePot({
-                amount: potIncrement * eligibleCount,
-                eligiblePlayers: eligiblePlayers
-            });
-            
+
+            sidePots[level] = SidePot({amount: potIncrement * eligibleCount, eligiblePlayers: eligiblePlayers});
+
             previousAmount = currentAmount;
         }
-        
+
         return sidePots;
     }
 }
